@@ -129,3 +129,8 @@ python3 tools/smoke_test.py --export
 `tests/` 不需要私人原始素材；`engine/test_*.py` 的历史专项测试需要额外的对应 fixture，
 不能直接对 `engine/` 运行普通 discovery 并视为可移植的完整回归。
 所有测试输出保留在 `work/`，不登记到剪映首页，也不自动清理。
+## Windows FFmpeg export
+
+Windows uses the independent FFmpeg renderer and produces a playable MP4, not
+a Jianying-native editable draft. See `docs/windows-ffmpeg.md` for setup,
+supported features, logs, and verification.

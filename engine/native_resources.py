@@ -14,7 +14,7 @@ import stat
 import headless_runtime as rt
 
 HERE = Path(__file__).resolve().parent
-CATALOG_SHA = '68021d765aa212436891056d06f205ef96365e1b687a3fdc28691f00a50105c5'
+CATALOG_SHA = '7043ebf1a3de79b6f9857e8387d937c4f9c7be35b25468b21b2ebe75664a2e54'
 SHAPES = ('circle', 'rectangle', 'line', 'mirror', 'star', 'heart')
 
 
@@ -67,7 +67,7 @@ def catalog():
         if isinstance(item, str) and item.startswith('@home/'):
             relative = Path(item[len('@home/'):])
             require(not relative.is_absolute() and '..' not in relative.parts, 'Invalid catalog home-relative path')
-            return str(Path.home() / relative)
+            return str(Path.home()) + '/' + relative.as_posix()
         return item
     return expand_home(value)
 

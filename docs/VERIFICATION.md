@@ -60,3 +60,9 @@ JY_NATIVE_EXPORT_TEST_WORK="$PWD/work/export-guard-checks" python3 engine/test_n
 
 下一次变更需按实际影响选择验证；不得为了完成发布而降低既有版本、哈希、资源或
 首页登记门禁。原生交互验收只在具备条件并有对应证据时单独报告。
+## Windows FFmpeg export
+
+Run `python -m unittest engine.test_windows_ffmpeg -v`. The backend must
+preserve the verified build manifest, retain its filter graph and logs, pass
+ffprobe, and pass a full `ffmpeg -xerror` decode. Its output is a rendered MP4,
+not a continuable Jianying-native draft.

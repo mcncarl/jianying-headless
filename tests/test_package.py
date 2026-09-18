@@ -82,7 +82,12 @@ class PackagingTests(unittest.TestCase):
         original = self.folder / 'original'
         original.write_bytes(b'original')
         link = self.folder / 'link'
-        link.symlink_to(original)
+        try:
+            link.symlink_to(original)
+        except OSError as error:
+            if os.name == 'nt':
+                self.skipTest('Windows symlink privilege is not enabled: ' + str(error))
+            raise
         with self.assertRaises(io.ApplyError):
             io._snapshot_file(link, 'fixture')
 
