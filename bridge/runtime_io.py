@@ -7,7 +7,17 @@ included. The official engine remains an external local dependency.
 
 from __future__ import annotations
 
-import fcntl
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - native mutation is macOS-only
+    class _WindowsFcntl:
+        LOCK_EX = LOCK_NB = LOCK_UN = 0
+
+        @staticmethod
+        def flock(descriptor, operation):
+            raise RuntimeError('The native Jianying codec/locking bridge is not available on Windows')
+
+    fcntl = _WindowsFcntl()
 
 import hashlib
 
@@ -104,6 +114,14 @@ def _open_directory_secure(path: Path, label: str) -> int:
         raise
 
 def _directory_identity(path: Path, label: str) -> Tuple[int, int]:
+    if os.name == 'nt':
+        try:
+            metadata = Path(path).stat()
+            if not stat.S_ISDIR(metadata.st_mode):
+                raise ApplyError('%s is not a directory' % label)
+            return metadata.st_dev, metadata.st_ino
+        except OSError as exc:
+            raise ApplyError('%s could not be opened' % label) from exc
     descriptor = _open_directory_secure(path, label)
     try:
         metadata = os.fstat(descriptor)
@@ -115,6 +133,23 @@ def _open_regular_readonly(
     path: Path, label: str, *, max_bytes: Optional[int] = MAX_REGULAR_FILE_BYTES
 ) -> Tuple[int, os.stat_result, Tuple[int, int]]:
     path = _absolute_lexical(path)
+    if os.name == 'nt':
+        # The descriptor-relative POSIX walk below is intentionally retained
+        # for macOS. Windows has no equivalent dir_fd/openat contract in the
+        # standard library, so use the strongest available lstat/read-only
+        # check and keep the native codec bridge unavailable on this platform.
+        try:
+            before = path.lstat()
+            if not stat.S_ISREG(before.st_mode) or path.is_symlink():
+                raise ApplyError('%s must be a non-symlink regular file' % label)
+            if max_bytes is not None and before.st_size > max_bytes:
+                raise ApplyError('%s exceeds the safety size limit' % label)
+            descriptor = os.open(str(path), os.O_RDONLY)
+            opened = os.fstat(descriptor)
+            parent = path.parent.stat()
+            return descriptor, opened, (parent.st_dev, parent.st_ino)
+        except OSError as exc:
+            raise ApplyError('%s could not be opened' % label) from exc
     parent_fd = _open_directory_secure(path.parent, "%s parent" % label)
     parent_meta = os.fstat(parent_fd)
     parent_identity = (parent_meta.st_dev, parent_meta.st_ino)

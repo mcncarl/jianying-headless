@@ -28,7 +28,7 @@ import native_effects as effects
 import native_visual_effects as visual_effects
 
 HERE = Path(__file__).resolve().parent
-BLUEPRINT_SHA = '91f7eddad5bff9af23eb88b53713c180e3e3d4054edd469140cfa9aa56bc1dc9'
+BLUEPRINT_SHA = 'a8e75a70f576c0dfd5854d4e2e9aac0190d17b3fa13813039ef14c15cdccec41'
 SCHEMA = 'jy14-headless-plan/v1'
 MICROS = 1_000_000
 STILL_CAPACITY_US = 10_800_000_000  # Native photo/GIF material capacity, not decoded GIF duration.
@@ -354,11 +354,15 @@ def files_manifest(folder):
 
 
 def build(plan_path, out):
-    runtime = nd.doctor()
+    portable_windows = os.name == 'nt'
+    runtime = ({'status': 'ok', 'runtime_profile': 'jy14-portable-windows',
+                'runtime_hashes_verified': False, 'network_called': False,
+                'full_signature_check': 'not-applicable'} if portable_windows else nd.doctor())
     plan = read_json(plan_path)
     assets, duration = validate_plan(plan)
     bp = blueprint()
-    target = nd.DRAFT_ROOT / plan['name']
+    target = ((Path(out).resolve() / plan['name']) if portable_windows
+              else nd.DRAFT_ROOT / plan['name'])
     require(not target.exists(), 'Target already exists; choose a new draft name')
     out = nd.fresh_directory(out)
     folder = out / 'draft'
@@ -392,9 +396,12 @@ def build(plan_path, out):
     legacy.update(id=identifier(), duration=0, tracks=[], materials={}, fps=float(plan['canvas']['fps']))
     timeline_dir = folder / 'Timelines' / tid
     timeline_dir.mkdir(parents=True, mode=0o700)
-    h = nd.helper()
-    h._encrypt_metadata_from_memory(nd.packed(timeline), folder / 'draft_info.json')
-    require(h._decrypt_metadata_in_memory(folder / 'draft_info.json') == timeline, 'Timeline codec round-trip failed')
+    h = None if portable_windows else nd.helper()
+    if portable_windows:
+        write(folder / 'draft_info.json', nd.packed(timeline))
+    else:
+        h._encrypt_metadata_from_memory(nd.packed(timeline), folder / 'draft_info.json')
+        require(h._decrypt_metadata_in_memory(folder / 'draft_info.json') == timeline, 'Timeline codec round-trip failed')
     cipher = (folder / 'draft_info.json').read_bytes()
     for dest in (folder / 'template-2.tmp', timeline_dir / 'draft_info.json', timeline_dir / 'template-2.tmp',
                  folder / 'draft_info.json.bak', timeline_dir / 'draft_info.json.bak'):
@@ -424,9 +431,17 @@ def build(plan_path, out):
     subprocess.run(command, check=True, capture_output=True)
     write(timeline_dir / 'draft_cover.jpg', (folder / 'draft_cover.jpg').read_bytes())
     metadata['draft_timeline_materials_size_'] = sum(a['size'] for a in assets.values()) + len(cipher)
-    h._encrypt_metadata_from_memory(nd.packed(metadata), folder / 'draft_meta_info.json')
-    require(h._decrypt_metadata_in_memory(folder / 'draft_meta_info.json') == metadata, 'Metadata codec round-trip failed')
+    if portable_windows:
+        write(folder / 'draft_meta_info.json', nd.packed(metadata))
+    else:
+        h._encrypt_metadata_from_memory(nd.packed(metadata), folder / 'draft_meta_info.json')
+        require(h._decrypt_metadata_in_memory(folder / 'draft_meta_info.json') == metadata, 'Metadata codec round-trip failed')
     write(out / 'plan.json', plan)
+    if portable_windows:
+        # A Windows build is intentionally portable JSON, not a native draft.
+        # Keep this sidecar outside the draft manifest so the native build
+        # schema and macOS verification boundaries remain unchanged.
+        write(out / 'windows-timeline.json', timeline)
     record = {'schema': 'jy14-headless-build/v1', 'name': target.name, 'target': str(target), 'draft_id': did,
               'timeline_id': tid, 'project_id': pid, 'created_us': now, 'duration_us': duration,
               'blueprint_sha256': BLUEPRINT_SHA, 'runtime_manifest': nd.MANIFEST_SHA,
@@ -566,6 +581,10 @@ def verify_build(out):
             and record['runtime_manifest'] == nd.MANIFEST_SHA, 'Build version or provenance differs')
     require(nd.digest(out / 'plan.json') == record['plan_sha256'], 'Plan changed after build')
     require(files_manifest(out / 'draft') == record['files'], 'Built draft changed')
+    if record.get('runtime_profile') == 'jy14-portable-windows':
+        require((out / 'windows-timeline.json').is_file(), 'Portable Windows timeline sidecar is missing')
+        require(read_json(out / 'windows-timeline.json').get('tracks'), 'Portable Windows timeline is empty')
+        return record
     plan = read_json(out / 'plan.json')
     target = nd.DRAFT_ROOT / plan['name']
     require(record['target'] == str(target), 'Build target is not the planned direct-child draft')

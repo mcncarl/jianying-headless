@@ -121,3 +121,8 @@ python3 SKILL/scripts/headless_draft.py resume-publish --build WORK/headless-bui
 它只在整个目标目录仍与 build 清单逐字节一致、剪映关闭、当前 runtime 一致时继续，不覆盖草稿；已成功登记时返回只读幂等结果。若用户或剪映已改变任何文件，保留现场并定向诊断。审计保留原首页索引，所有中间材料保留；不自动删除、回滚或重新生成另一份同名项目。
 
 本机封装不等于可分发安装包：不打包 codec、真实草稿、缓存音效、bookmark 或账号配置。移机或公开发布需要另行授权与兼容验证。
+## Windows note
+
+The macOS-native workflow in this reference is not used for Windows rendering.
+On Windows, `headless_draft.py export` selects the independent FFmpeg backend
+and produces a non-editable MP4. See `docs/windows-ffmpeg.md` for details.

@@ -32,19 +32,19 @@ def project_root():
 PROJECT_ROOT = project_root()
 BACKEND = PROJECT_ROOT / 'engine'
 PINS = {
-    'jy14_headless.py': 'fd9ec517f35e810b3e38b340a5b344861c7fb53e56053b1c39ed9e25ddbf437f',
-    'native_motion.py': '5d743caaa38c921779166e5663d36f72a0c3fdb130a690ac3942a7adcf62d6c2',
-    'native_effects.py': 'c46b2fc9221dd613f220564b752e532f8f3753dd5595aaffc24f41d5236e4e97',
-    'native_resources.py': '0b0f3048902f7ebb4629882f2739508a828784183c949786da4024ae24bee369',
-    'native_visual_effects.py': 'f8a7a2d899383a5932deabe1c7adf644c61e37016e788d361ccd6ef6c95ac30d',
-    'native-resource-catalog.json': '68021d765aa212436891056d06f205ef96365e1b687a3fdc28691f00a50105c5',
-    'native_compound.py': '7b0df5a74d75d8f5623b11de3f4307569f84a4c6127ec316ed6fd133fc8d0d79',
-    'compound-blueprint.json': '9cba9435053280abf9072d5eaccb8586c841b11dac6854b32daf9cbdba76af8e',
-    'native_edit.py': '647a63e4346ae5514b7071a9de37f237bb1ff61abf2c399cb06683a6cd9bc777',
-    'native_export.py': 'dccdfaeefc44fd5419f9cd16a0f00518f7d64b5fca69f236e77bd70b998c6920',
-    'native_export.cpp': '3d74947a8b05c8ca31b0dc3909e0a08be4818985646c00cc64d63fb0645cee25',
-    'headless_runtime.py': 'bff4c918721295a2d98c61f9ef10a9a386e3b3a79f4c8bdeaee8682b9fa748c1',
-    'blueprint.json': '91f7eddad5bff9af23eb88b53713c180e3e3d4054edd469140cfa9aa56bc1dc9',
+    'jy14_headless.py': 'ae96f9349ab207928d5cd7534bf1c92c05bb2d8a627b948bac1e40f88f6cd366',
+    'native_motion.py': '23575ddcd11bf0be10c9f371749f121d3de593255f0b6cabcda1f79d9f714780',
+    'native_effects.py': '93c13600e98b5f820bf3324d6126e30c334ea7073407d02c2c98bc90b70a189d',
+    'native_resources.py': '6e78d6d205850dc5e929b77310167fb722040ed23d80764edd02fe4dc3286584',
+    'native_visual_effects.py': '6a4ced9547b82a369a58bb8a9540ce6a6a4efe0dfa94434c0b3c4567808e808b',
+    'native-resource-catalog.json': '7043ebf1a3de79b6f9857e8387d937c4f9c7be35b25468b21b2ebe75664a2e54',
+    'native_compound.py': '6eb64118e1e3bdff1473b93128b8225f61030e5d6af71ea0286b83c3a330f155',
+    'compound-blueprint.json': 'b897ae725cf8ac1104d35bba90a14313eaf5afb9bed4cc5ff04a765031767f02',
+    'native_edit.py': '4e3a59be7592e977609632d85530737c0f9b5663b0cd946d33ead45b1fea1675',
+    'native_export.py': 'af3c142a571cfcd6b4edd08384c020b38b05f53967ac13e8329705a5b5bccdae',
+    'native_export.cpp': 'acfb55a9204cbf4048ef2bf14ecdbd2c42914a0e77bff50c8b421b3347f3ee11',
+    'headless_runtime.py': '05bd16ab1fdb40f09e236f262835863577c4e891db01af655a251703e129caf4',
+    'blueprint.json': 'a8e75a70f576c0dfd5854d4e2e9aac0190d17b3fa13813039ef14c15cdccec41',
 }
 
 for name, expected in PINS.items():
@@ -58,6 +58,19 @@ if len(sys.argv) > 1 and sys.argv[1] == 'edit':
     entrypoint = 'native_edit.py'
     del sys.argv[1]
 elif len(sys.argv) > 1 and sys.argv[1] == 'export':
-    entrypoint = 'native_export.py'
     del sys.argv[1]
+    requested = None
+    if '--backend' in sys.argv:
+        index = sys.argv.index('--backend')
+        if index + 1 >= len(sys.argv):
+            raise SystemExit('--backend requires a value')
+        requested = sys.argv[index + 1]
+        del sys.argv[index:index + 2]
+    requested = requested or os.environ.get('JIANYING_EXPORT_BACKEND')
+    if requested and requested not in {'native', 'windows-ffmpeg'}:
+        raise SystemExit('Unsupported export backend: ' + requested)
+    if requested == 'windows-ffmpeg' or (requested is None and sys.platform == 'win32'):
+        entrypoint = 'windows_export.py'
+    else:
+        entrypoint = 'native_export.py'
 runpy.run_path(str(BACKEND / entrypoint), run_name='__main__')
