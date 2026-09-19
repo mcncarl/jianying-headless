@@ -78,6 +78,19 @@ applicable license depends on how they were built. The development environment
 used a GPL-enabled FFmpeg build. If distributing binaries or changing the
 integration approach, review the actual build and its separate obligations.
 
+## fontTools 4.60.2 — MIT, optional external dependency
+
+- Upstream: <https://github.com/fonttools/fonttools>
+- Exact version license: <https://github.com/fonttools/fonttools/blob/4.60.2/LICENSE>
+- Package: <https://pypi.org/project/fonttools/4.60.2/>
+
+Explicit local-font assignment uses fontTools to parse font metadata and
+tables. Install it separately using [requirements-fonts.txt](requirements-fonts.txt);
+its package, font files and binaries are not included in this source preview.
+Default builds and existing snapshot verification do not require the parser.
+The project license does not replace the dependency's MIT license or grant rights
+to font files supplied by users.
+
 ## Python, macOS and Xcode toolchain
 
 Python and Apple's developer tools are external prerequisites, not bundled

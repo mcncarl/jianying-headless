@@ -92,6 +92,24 @@ python3 skills/yichen-jianying-edit/scripts/headless_draft.py verify-build \
 [README](../README.md) 与 [计划格式](../skills/yichen-jianying-edit/references/headless-macos.md)。
 无需安装或更新 Hypit 来读取一份已经准备好的交接计划；上述命令不会重新生成 Hypit 素材。
 
+## 新建计划中的字体指定
+
+项目转换脚本现在可以为每个文字片段传入可选的 `font_path`，把所选 Hypit 版本实际使用的
+本地静态 OTF/TTF 直接交给新建草稿流程。例如在上述示例的字幕片段内加入：
+
+```json
+"font_path": "/absolute/path/SourceHanSerif-Bold.otf"
+```
+
+构建时即写入材料与富文本样式两处字体路径，并把字体文件按内容 hash 复制到草稿内。
+同一字体不会随每条字幕重复复制，不需要先生成默认字体草稿再替换。未填写该字段时保留
+原有行为；显式指定的字体缺失、损坏或格式不支持时会报错。
+
+字体名和 CSS 字重不自动映射为文件。若标题、字幕使用不同字体，转换时分别指定文件；
+当前不处理同一片段内的多字体富文本，也不提供通用 Hypit 工程解析器。
+规则和完整步骤见 [Skill 字体交接说明](../skills/yichen-jianying-edit/references/hypit-handoff.md)。
+此功能不改变上方历史案例的验证记录。独立字体样例已完成本机原生显示、可编辑性、保存重开及渲染检查；使用本机构建的 codec，完整编辑回读仍触发上游默认速度字段问题。环境与结果见 [字体验证记录](LOCAL-FONTS.md#native-acceptance-2026-09-20)，不代表上述 Hypit 案例的排版差异已经修复。
+
 ## 案例证据与分发边界
 
 本机原始记录位于外层任务的 `work/ig-hypit-jianying-20260918/`：

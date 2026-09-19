@@ -74,7 +74,8 @@ python3 SKILL/scripts/headless_draft.py from-compiled --compiled WORK/compiled/c
 - 视频、音频：`source` 为本次授权的绝对本地文件路径；`source_start_us` 默认 0；`source_duration_us` 默认等于目标时长；`speed` 默认 1。`source_duration_us / speed` 必须与 `duration_us` 一致，且源区间不能越界。
 - 速度范围 0.1–8；`volume` 是 0–4 线性增益。保持音高当前没有独立计划字段，不能宣称已经精确控制该开关。需要指定时原生核对或另行扩展。
 - 视频额外支持 `scale`（统一缩放，默认 1）、`x/y`（默认 0）、`rotation`（默认 0）、`opacity`（0–1，默认 1）。它们不是像素坐标；按剪映画面实测调整。文字默认 `y=-0.78`，多行或画面主体不同不要盲用默认位置。
-- 文字支持 `size`、`x/y`、`color`、`border_color`、`border_width`；颜色为 `#RRGGBB`，字体使用安装包内置中文字库，不用账号字体。普通字号与描边使用原生内部值，不等同于 CSS px。emoji 使用 UTF-16 长度范围写入。
+- 文字支持 `size`、`x/y`、`color`、`border_color`、`border_width` 和可选的 `font_path`；颜色为 `#RRGGBB`。省略 `font_path` 时使用原有内置中文字库，指定时直接使用绝对路径对应的本地静态 `.otf` / `.ttf`，如 `"font_path": "/absolute/path/SourceHanSerif-Bold.otf"`。文件缺失、损坏或格式不支持会报错，不回落到默认字体。普通字号与描边使用原生内部值，不等同于 CSS px。emoji 使用 UTF-16 长度范围写入。
+- 字体按内容 hash 复制到草稿 `Resources/headless-fonts/`，同字节字体只保留一份文件；`build.json` 的 `font_assets` 单独记录依赖，不进入视频/音频媒体库。创建时同步写入文字材料和富文本样式的字体路径，`verify-build` / `verify` 检查两处绑定及字体字节，原生导出暂存也复制并映射字体。构建后不再依赖原字体文件。当前不接受字体名称、URL、TTC/OTC 字体集合、可变字体或在线账号字体；每个文字片段使用一个字体，字重由字体文件决定。Hypit 转换见 [素材与字体交接](hypit-handoff.md)。独立 TTF/CFF 样例已完成本机 11.5.0 显示、可编辑性、保存重开及原生渲染检查；使用本机构建的 codec，完整编辑回读仍触发上游默认速度字段问题。具体环境与限制见核心项目 `docs/LOCAL-FONTS.md`，每个实际项目仍须验收。
 - 输入视频当前限制 H.264/HEVC、单视频流及最多一条音频流，拒绝旋转元数据及未知像素格式；不偷偷转码。`video` 轨也可直接使用 PNG、JPEG 和 GIF，按实际编码识别媒体类型并保留原文件。静态图片不能指定源偏移或非 1 倍速度；GIF 暂不接受超过实际动画时长的循环延长。APNG、复合片段、文字/自定义蒙版、未采集的滤镜/特效/花字、除叠化外的转场和在线模板尚未接入新计划，未知字段会报错。
 - 创建时为每个源文件复制一个内容 hash 命名的草稿内素材。源路径不再是播放依赖；不要清理草稿 `Resources`。不写剪映全局 bookmark，也不携带用户账号或在线签名 URL。
 

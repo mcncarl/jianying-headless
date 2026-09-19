@@ -9,6 +9,9 @@
   <https://github.com/GuanYixuan/pyJianYingDraft>。完整声明和许可证保留在核心项目，
   不把这条历史关系描述为完全独立原创。
 - FFmpeg、Python 和 Xcode 是外部工具，各自条款仍适用。
+- 显式指定新字体时需在执行脚本的 Python 环境中安装核心项目的
+  `requirements-fonts.txt`（fontTools 4.60.2，MIT）。默认字体流程、普通编辑和
+  已有快照验证不需要此可选解析器；字体文件不随源码分发。
 - 可选 ASR 需要单独安装的执行器/Skill、服务访问权限和本次调用授权；本 Skill
   不包含令牌，也不从聊天、剪贴板或浏览器自动寻找凭据。
 

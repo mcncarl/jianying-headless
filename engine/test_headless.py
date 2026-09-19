@@ -21,7 +21,7 @@ class HeadlessTests(unittest.TestCase):
             j.validate_plan(self.plan)
 
     def test_real_four_local_assets(self):
-        assets, duration = j.validate_plan(self.plan)
+        assets, duration, _ = j.validate_plan(self.plan)
         self.assertEqual(len(assets), 4)
         self.assertEqual(duration, 6000000)
         self.assertEqual({a['kind'] for a in assets.values()}, {'video', 'audio'})
@@ -57,7 +57,7 @@ class HeadlessTests(unittest.TestCase):
 
     def test_blank_is_supported(self):
         self.plan['tracks'] = []
-        self.assertEqual(j.validate_plan(self.plan), ({}, 0))
+        self.assertEqual(j.validate_plan(self.plan), ({}, 0, {}))
 
     def test_unicode_text_uses_utf16_ranges(self):
         material = deepcopy(j.blueprint()['text']['materials'][0][1])
@@ -67,11 +67,11 @@ class HeadlessTests(unittest.TestCase):
         self.assertEqual(text['styles'][0]['fill']['content']['solid']['color'], [1, 0, 0])
 
     def test_unique_ids_and_same_source_dedup(self):
-        assets, _ = j.validate_plan(self.plan)
+        assets, _, font_assets = j.validate_plan(self.plan)
         for n, a in enumerate(assets.values()):
             a.update(relative='Resources/' + str(n), local_id=j.identifier())
         target = j.nd.DRAFT_ROOT / self.plan['name']
-        timeline, records = j.timeline_for(self.plan, assets, target, j.identifier(), j.blueprint())
+        timeline, records = j.timeline_for(self.plan, assets, target, j.identifier(), j.blueprint(), font_assets)
         ids = [m['id'] for mats in timeline['materials'].values() for m in mats]
         ids += [t['id'] for t in timeline['tracks']]
         ids += [s['id'] for t in timeline['tracks'] for s in t['segments']]
@@ -192,7 +192,7 @@ class HeadlessTests(unittest.TestCase):
         self.assertEqual(len(result['sound_display_duration_adjustments']), 2)
         self.assertFalse(result['native_library_registration_created'])
         self.assertTrue(result['cached_sounds_as_local'])
-        assets, duration = j.validate_plan(plan)
+        assets, duration, _ = j.validate_plan(plan)
         self.assertEqual(len(assets), 2)
         self.assertEqual(duration, 2000000)
 

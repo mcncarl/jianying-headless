@@ -43,6 +43,7 @@ python3 SKILL/scripts/headless_draft.py edit verify --build WORK/edited-build --
 
 - `set_segment`：片段 ID；`set` 支持 `start_us`、`duration_us`、`source_start_us`、`source_duration_us`、`speed`、`volume`、`visible`。视频/文字还支持 `x/y/scale/rotation/opacity`；文字不接受源时间、速度、音量。修改速度时同时提供相符的源/目标时长。动画属性不得只改静态基值；已带关键帧片段的源时间变更暂不支持自动重映射。
 - `replace_text`：文字素材 ID；保留全文一致样式并按 UTF-16 更新长度。局部多样式文字拒绝自动改范围，需专用样式映射。
+- `set_text_font`：文字素材 ID 和绝对 `source`，如 `{"op":"set_text_font","id":"TEXT_MATERIAL_ID","source":"/absolute/path/font.otf"}`。只处理外层及各样式字体路径一致、无在线字体身份的普通文字；静态 OTF/TTF 复制到 `Resources/headless-fonts/`，保留文字、样式和时间。缺失或不支持的字体会报错。独立换字体样例已完成本机 11.5.0 显示、保存重开与原生渲染检查，使用本机构建的 codec；完整 `edit verify` 仍因上游不接受省略默认 `speed: 1` 而失败，不能以字体检查通过代替完整回读通过。环境与证据见核心项目 `docs/LOCAL-FONTS.md`。新建或 Hypit 交接直接使用文字片段的 `font_path`，见 [无界面计划](headless-macos.md)。
 - `replace_media`：视频/图片/GIF/本地音频素材 ID 和绝对 `source`。媒体类别须与原素材一致，所有引用的源范围都要落在新素材实际时长内。
 - `rename_track`：轨道 ID 和 `name`。
 - `duplicate_segment`：片段 ID、`start_us`，可指定同类 `track_id`。复制全部配套素材节点和关键帧 ID，保留媒体库文件复用，不共享可变片段节点。

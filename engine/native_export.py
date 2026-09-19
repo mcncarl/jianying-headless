@@ -18,6 +18,7 @@ import time
 
 import jy14_headless as j
 import native_edit as edit
+import native_fonts as fonts
 import native_motion as motion
 import native_resources as resources
 import native_compound as compound
@@ -262,6 +263,16 @@ def stage_timeline(timeline, record, folder, out):
     nodes = [(bucket, node) for _, timeline_node in graph
              for bucket in ('videos', 'audios', 'common_mask', 'transitions', 'video_effects', 'audio_effects', 'effects')
              for node in timeline_node.get('materials', {}).get(bucket, [])]
+    # Fonts are draft-owned dependencies outside the media-library buckets.
+    font_assets = fonts.recorded_assets(record)
+    if font_assets is not None:
+        fonts.verify_assets(font_assets, value, target, folder)
+    for asset in font_assets or ():
+        raw = str(target / asset['relative'])
+        source, relative = source_in_build(raw, target, folder)
+        copy_file(relative, {'sha256': asset['sha256'], 'size': asset['size']})
+        mapping[raw] = str(out / relative)
+        canonical_mapping[str(j.native_media_path(raw, target))] = str(out / relative)
     for bucket, node in nodes:
         raw = node.get('path')
         if not raw:

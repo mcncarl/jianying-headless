@@ -26,6 +26,7 @@ import native_motion as motion
 import native_resources as resources
 import native_effects as effects
 import native_visual_effects as visual_effects
+import native_fonts as fonts
 from runtime_profiles import validate_timeline_schema
 
 HERE = Path(__file__).resolve().parent
@@ -148,6 +149,7 @@ def blueprint():
 
 
 def validate_plan(plan):
+    """Return media, duration and parsed fonts for reuse throughout this build."""
     keys(plan, {'schema', 'name', 'canvas', 'tracks'}, 'Plan')
     require(plan.get('schema') == SCHEMA, 'Unsupported plan schema')
     name = plan.get('name')
@@ -182,7 +184,7 @@ def validate_plan(plan):
                 allowed |= {'scale', 'x', 'y', 'rotation', 'opacity', 'mask', 'transition_out'}
             elif kind == 'text':
                 allowed = {'start_us', 'duration_us', 'text', 'size', 'x', 'y', 'color', 'border_color', 'border_width',
-                           'keyframes', 'opacity', 'text_effect'}
+                           'keyframes', 'opacity', 'text_effect', 'font_path'}
             elif kind in {'filter', 'effect'}:
                 allowed = {'start_us', 'duration_us', 'name', 'strength' if kind == 'filter' else 'params'}
             keys(seg, allowed, 'Segment')
@@ -223,8 +225,9 @@ def validate_plan(plan):
         require(seen_main, 'A nonempty draft needs a main video track')
         main_end = max(s.get('start_us', 0) + s['duration_us'] for s in plan['tracks'][0]['segments'])
         require(duration == main_end, 'Overlay, audio and text must fit within the main video duration')
+    font_assets = fonts.collect_plan(plan)
     effects.transition_audit(plan, assets)
-    return assets, duration
+    return assets, duration, font_assets
 
 
 def remap(value, ids):
@@ -256,7 +259,8 @@ def text_material(material, seg):
                     font_size=size, text_color=color, border_color=border, border_width=width)
 
 
-def timeline_for(plan, assets, target, tid, bp):
+def timeline_for(plan, assets, target, tid, bp, font_assets=None):
+    font_assets = fonts.collect_plan(plan) if font_assets is None else font_assets
     doc = deepcopy(bp['timeline'])
     doc.update(id=tid, tracks=[], materials={}, duration=0, color_space=0,
                canvas_config={k: plan['canvas'][k] for k in ('width', 'height')})
@@ -317,6 +321,8 @@ def timeline_for(plan, assets, target, tid, bp):
                         material.update(name=Path(asset['source']).name, music_id=asset['local_id'], resource_id=asset['local_id'])
                 if bucket == 'texts':
                     text_material(material, spec)
+                    if 'font_path' in spec:
+                        fonts.bind(material, font_assets[str(Path(spec['font_path']))], target)
                 doc['materials'].setdefault(bucket, []).append(material)
             if kind != 'text':
                 reg = deepcopy(bp['local_registration'])
@@ -357,7 +363,7 @@ def files_manifest(folder):
 def build(plan_path, out):
     runtime = nd.doctor()
     plan = read_json(plan_path)
-    assets, duration = validate_plan(plan)
+    assets, duration, font_assets = validate_plan(plan)
     bp = blueprint()
     target = nd.DRAFT_ROOT / plan['name']
     require(not target.exists(), 'Target already exists; choose a new draft name')
@@ -380,7 +386,8 @@ def build(plan_path, out):
             os.chmod(dest, 0o600)
         require(nd.digest(dest) == asset['sha256'] == nd.digest(asset['source']), 'Source changed while copying')
     native_resources = resources.prepare(plan, folder, runtime)
-    timeline, reg = timeline_for(plan, assets, target, tid, bp)
+    fonts.copy_assets(font_assets.values(), folder)
+    timeline, reg = timeline_for(plan, assets, target, tid, bp, font_assets)
     metadata = deepcopy(bp['metadata'])
     metadata.update(draft_id=did, draft_name=target.name, draft_fold_path=str(target), draft_root_path=str(nd.DRAFT_ROOT),
                     tm_draft_create=now, tm_draft_modified=now, tm_duration=duration,
@@ -424,7 +431,8 @@ def build(plan_path, out):
                    '-frames:v', '1', str(folder / 'draft_cover.jpg')]
     subprocess.run(command, check=True, capture_output=True)
     write(timeline_dir / 'draft_cover.jpg', (folder / 'draft_cover.jpg').read_bytes())
-    metadata['draft_timeline_materials_size_'] = sum(a['size'] for a in assets.values()) + len(cipher)
+    font_sizes = {a['relative']: a['size'] for a in font_assets.values()}
+    metadata['draft_timeline_materials_size_'] = sum(a['size'] for a in assets.values()) + sum(font_sizes.values()) + len(cipher)
     h._encrypt_metadata_from_memory(nd.packed(metadata), folder / 'draft_meta_info.json')
     require(h._decrypt_metadata_in_memory(folder / 'draft_meta_info.json') == metadata, 'Metadata codec round-trip failed')
     write(out / 'plan.json', plan)
@@ -433,6 +441,7 @@ def build(plan_path, out):
               'blueprint_sha256': BLUEPRINT_SHA, 'runtime_manifest': nd.MANIFEST_SHA,
               'runtime_profile': runtime['runtime_profile'], 'runtime': runtime,
               'assets': list(assets.values()), 'native_resources': native_resources,
+              'font_assets': list(font_assets.values()),
               'transition_audit': effects.transition_audit(plan, assets),
               'plan_sha256': nd.digest(out / 'plan.json'),
               'files': files_manifest(folder), 'media_copy_policy': 'draft-owned-resources',
@@ -440,7 +449,7 @@ def build(plan_path, out):
     write(out / 'build.json', record)
     verify_build(out)
     return {'status': 'built', 'build': str(out), 'name': target.name, 'duration_us': duration,
-            'tracks': len(plan['tracks']), 'media_files': len(assets), 'live_written': False,
+            'tracks': len(plan['tracks']), 'media_files': len(assets), 'font_files': len(font_sizes), 'live_written': False,
             'native_resource_usage': [{'key': r['key'], **r['usage']} for r in native_resources if 'usage' in r],
             'ui_preparation_used': False, 'native_ui_acceptance': 'pending'}
 
@@ -461,7 +470,7 @@ def native_media_path(value, target):
 
 
 def verify_structure(timeline, metadata, plan, assets, target, allow_native_resource_cache=False,
-                     runtime_profile=None):
+                     runtime_profile=None, font_assets=()):
     validate_timeline_schema(timeline, runtime_profile)
     require(all(timeline['canvas_config'][k] == plan['canvas'][k] for k in ('width', 'height')), 'Canvas changed')
     require(timeline.get('fps', 30) == plan['canvas']['fps'], 'Timeline frame rate changed')
@@ -476,6 +485,7 @@ def verify_structure(timeline, metadata, plan, assets, target, allow_native_reso
     ids = set(index)
     max_end = 0
     native_resource_bindings = []
+    font_index = {a['source']: a for a in font_assets}
     for track, wanted in zip(timeline.get('tracks', []), plan['tracks']):
         require(track['type'] == wanted['type'] and len(track['segments']) == len(wanted['segments']), 'Track kind/length changed')
         require(track['id'] not in ids, 'Duplicate track ID')
@@ -517,6 +527,10 @@ def verify_structure(timeline, metadata, plan, assets, target, allow_native_reso
                 if 'rotation' not in animated:
                     require(abs(clip.get('rotation', 0) - spec.get('rotation', 0)) < 1e-5, 'Rotation changed')
             if wanted['type'] == 'text':
+                if 'font_path' in spec:
+                    font_asset = font_index.get(str(Path(spec['font_path'])))
+                    require(font_asset is not None, 'Planned font has no verified dependency')
+                    fonts.verify_binding(material, font_asset, target)
                 content = json.loads(material['content'])
                 require(content['text'] == spec['text'], 'Subtitle text changed')
                 expected_length = len(spec['text'].encode('utf-16-le')) // 2
@@ -574,7 +588,10 @@ def verify_build(out):
     h = nd.helper()
     timeline = h._decrypt_metadata_in_memory(out / 'draft/draft_info.json')
     metadata = h._decrypt_metadata_in_memory(out / 'draft/draft_meta_info.json')
-    verify_structure(timeline, metadata, plan, record['assets'], target)
+    font_assets = fonts.recorded_assets(record, plan)
+    verify_structure(timeline, metadata, plan, record['assets'], target, font_assets=font_assets or ())
+    if font_assets is not None:
+        fonts.verify_assets(font_assets, timeline, target, out / 'draft')
     resources.verify_files(record.get('native_resources', []), out / 'draft', plan)
     return record
 
@@ -698,6 +715,7 @@ def verify_live(out):
             'Build provenance changed')
     plan = read_json(out / 'plan.json')
     require(nd.digest(out / 'plan.json') == record['plan_sha256'], 'Plan changed')
+    font_assets = fonts.recorded_assets(record, plan)
     target = nd.DRAFT_ROOT / plan['name']
     require(str(target) == record['target'] and target.is_dir() and not target.is_symlink(), 'Invalid target directory')
     h = nd.helper()
@@ -706,7 +724,8 @@ def verify_live(out):
     require(timeline['id'] == record['timeline_id'] and metadata['draft_id'] == record['draft_id'], 'Draft identity changed')
     native_resource_bindings = verify_structure(timeline, metadata, plan, record['assets'], target,
                                                allow_native_resource_cache=True,
-                                               runtime_profile=nd.doctor()['runtime_profile'])
+                                               runtime_profile=nd.doctor()['runtime_profile'],
+                                               font_assets=font_assets or ())
     project = read_json(target / 'Timelines/project.json')
     require(project['main_timeline_id'] == timeline['id'], 'Project/timeline reference changed')
     mirrors = [target / 'draft_info.json', target / 'template-2.tmp',
@@ -717,6 +736,7 @@ def verify_live(out):
     for asset in record['assets']:
         require(nd.digest(target / asset['relative']) == asset['sha256'], 'Draft-owned media changed')
     resources.verify_files(record.get('native_resources', []), target, plan)
+    font_files = fonts.verify_assets(font_assets, timeline, target, target) if font_assets is not None else 0
     root = read_json(nd.DRAFT_ROOT / 'root_meta_info.json')
     entries = [e for e in root['all_draft_store'] if e.get('draft_id') == record['draft_id']]
     require(len(entries) == 1 and entries[0]['draft_fold_path'] == str(target), 'Home registration missing or ambiguous')
@@ -724,6 +744,7 @@ def verify_live(out):
             'native_timeline_schema': timeline['new_version'],
             'tracks': [{'type': t['type'], 'segments': len(t['segments'])} for t in timeline.get('tracks', [])],
             'media_files': len(record['assets']), 'native_resources': len(record.get('native_resources', [])),
+            'font_files': font_files,
             'native_resource_bindings': native_resource_bindings,
             'native_cache_dependency': any(b['location'] == 'native-cache' for b in native_resource_bindings),
             'four_mirrors_equal': True, 'source_files_unchanged':

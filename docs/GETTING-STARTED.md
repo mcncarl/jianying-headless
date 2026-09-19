@@ -70,6 +70,9 @@ ffprobe -version
 
 **成功标志：**三个工具都能打印版本，Python 不低于 3.9。不需要 `pip install`，本教程的工具使用 Python 标准库。
 
+后续若要显式指定本地字体，再按[字体使用说明](LOCAL-FONTS.md#optional-font-parser)
+安装可选解析依赖。本教程的默认字体流程和已有快照的验证不需要该依赖。
+
 若 `brew` 提示找不到命令，先执行安装器给出的 Next steps，再重新打开终端；不要继续复制后续步骤。
 
 ## 第 3 步：准备剪映首页

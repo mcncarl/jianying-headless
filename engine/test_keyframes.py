@@ -12,7 +12,7 @@ class KeyframeTests(unittest.TestCase):
         self.plan = j.read_json(FIXTURE / 'keyframe-plan.json')
 
     def test_seven_motion_channels_on_three_media_types(self):
-        assets, duration = j.validate_plan(self.plan)
+        assets, duration, _ = j.validate_plan(self.plan)
         self.assertEqual(duration, 4000000)
         self.assertEqual(len(assets), 3)
         self.assertEqual(sum(len(s.get('keyframes', {})) for t in self.plan['tracks'] for s in t['segments']), 7)

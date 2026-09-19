@@ -26,6 +26,8 @@ description: 在装有匹配版本剪映的 Apple Silicon Mac 上，无界面生
 
 - 新建：读 [无界面计划与命令](references/headless-macos.md)。直接创建独立草稿，
   不要求先在 UI 里准备模板；在线模板不在此发行范围。
+- Hypit 工程交接：读 [素材与字体交接](references/hypit-handoff.md)，将选定成片的素材、时间线和
+  实际字体文件写入新建计划；文字片段可用 `font_path` 直接指定字体。
 - 修改已有草稿：读 [独立副本编辑](references/edit-existing-macos.md)，保留原项目。
 - 明确要求成片：读 [原生导出](references/export-macos.md)，只导出已验证的冻结快照。
 - 口播语义剪辑：读 [语义与音频质检](references/editing-and-qc.md) 和

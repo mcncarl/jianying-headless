@@ -58,7 +58,7 @@ class NativeTransitionTests(unittest.TestCase):
         segments[0]['source_start_us'] = 6000000
         segments[1]['source_start_us'] = 0
         segments[0]['transition_out']['edge_policy'] = 'repeat-edge'
-        assets, duration = j.validate_plan(self.plan)
+        assets, duration, _ = j.validate_plan(self.plan)
         audit = effects.transition_audit(self.plan, assets)
         self.assertEqual(duration, 4000000)
         self.assertEqual(audit[0]['repeated_edges'], ['left-tail', 'right-head'])
@@ -67,7 +67,7 @@ class NativeTransitionTests(unittest.TestCase):
         for segment in self.plan['tracks'][0]['segments']:
             segment['source'] = str(FIXTURE / 'assets/still.png')
             segment['source_start_us'] = 0
-        assets, duration = j.validate_plan(self.plan)
+        assets, duration, _ = j.validate_plan(self.plan)
         self.assertEqual(effects.transition_audit(self.plan, assets)[0]['repeated_edges'], [])
 
     def test_resource_binding_loss_and_unplanned_transition_are_detected(self):

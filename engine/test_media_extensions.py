@@ -13,7 +13,7 @@ class MediaExtensionTests(unittest.TestCase):
         self.plan = j.read_json(FIXTURE / 'photo-gif-plan.json')
 
     def test_photo_and_transparency_remain_original_pngs(self):
-        assets, span = j.validate_plan(self.plan)
+        assets, span, _ = j.validate_plan(self.plan)
         self.assertEqual(span, 5000000)
         self.assertEqual([a['media_type'] for a in assets.values()], ['gif', 'photo', 'photo'])
         self.assertTrue(all(not a['has_audio'] for a in assets.values()))
@@ -37,10 +37,10 @@ class MediaExtensionTests(unittest.TestCase):
                 j.validate_plan(plan)
 
     def test_native_photo_material_and_library_durations_are_distinct(self):
-        assets, _ = j.validate_plan(self.plan)
+        assets, _, font_assets = j.validate_plan(self.plan)
         for i, asset in enumerate(assets.values()):
             asset.update(relative='Resources/' + str(i), local_id=j.identifier())
-        timeline, _ = j.timeline_for(self.plan, assets, WORK / 'draft', j.identifier(), j.blueprint())
+        timeline, _ = j.timeline_for(self.plan, assets, WORK / 'draft', j.identifier(), j.blueprint(), font_assets)
         self.assertEqual([m['type'] for m in timeline['materials']['videos']], ['gif', 'photo', 'photo'])
         self.assertEqual([m['duration'] for m in timeline['materials']['videos']], [10800000000] * 3)
         self.assertEqual([j.library_record(a, WORK / 'draft', 0)['duration'] for a in assets.values()],

@@ -1,0 +1,2 @@
+# Optional: only needed when assigning a new local font; supports Python >=3.9.
+fonttools==4.60.2

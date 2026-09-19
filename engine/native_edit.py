@@ -16,6 +16,7 @@ import time
 
 import jy14_headless as j
 import native_compound as compound
+import native_fonts as fonts
 from runtime_profiles import validate_timeline_schema, saved_schema_upgrade
 
 SCHEMA = 'jy14-edit-plan/v1'
@@ -239,8 +240,9 @@ def overlaps(timeline):
     return found
 
 
-def apply_local_operations(timeline, metadata, operations, target):
+def apply_local_operations(timeline, metadata, operations, target, font_sources=None):
     j.require(isinstance(operations, list) and operations, 'Edit operations are required')
+    font_sources = {} if font_sources is None else font_sources
     old_overlaps = overlaps(timeline)
     copied_media, applied = [], []
     for operation in operations:
@@ -259,6 +261,10 @@ def apply_local_operations(timeline, metadata, operations, target):
             j.require(set(operation) == {'op', 'id', 'text'} and identifier in index and index[identifier][0] == 'texts',
                       'Replacement text must target an existing text material ID')
             replace_text(index[identifier][1], operation['text'])
+        elif op == 'set_text_font':
+            j.require(set(operation) == {'op', 'id', 'source'} and identifier in index and index[identifier][0] == 'texts',
+                      'Font replacement must target an existing text material ID')
+            event['font_asset'] = fonts.set_text_font(index[identifier][1], operation['source'], target, font_sources)
         elif op == 'rename_track':
             j.require(set(operation) == {'op', 'id', 'name'}, 'Invalid track rename fields')
             tracks = [t for t in timeline['tracks'] if t['id'] == identifier]
@@ -331,6 +337,7 @@ def apply_local_operations(timeline, metadata, operations, target):
 def apply_operations(timeline, metadata, operations, target):
     j.require(isinstance(operations, list) and operations, 'Edit operations are required')
     assets, applied = [], []
+    font_sources = {}
     for operation in operations:
         j.require(isinstance(operation, dict), 'Edit operation must be an object')
         local = deepcopy(operation)
@@ -343,7 +350,7 @@ def apply_operations(timeline, metadata, operations, target):
             event = compound.wrap_all(selected, local['name'], target)
             events, created = [event], []
         else:
-            created, events = apply_local_operations(selected, metadata, [local], target)
+            created, events = apply_local_operations(selected, metadata, [local], target, font_sources)
         if selected is not timeline:
             j.require(selected['duration'] == old_duration,
                       'Nested edits cannot change duration without an explicit parent-range policy')
@@ -403,7 +410,10 @@ def build(plan_path, out):
         if owner is not None:
             for key, path in compound.paths(owner, target).items():
                 owner[key] = str(path)
+    fonts.rebase_existing(timeline, source, target)
     assets, applied = apply_operations(timeline, metadata, plan['operations'], target)
+    font_assets = fonts.collect_edit_assets(timeline, source, target,
+                                           (o['font_asset'] for o in applied if 'font_asset' in o))
     # All referenced local clips must still exist and contain the requested source interval.
     probes = {}
     media_dependencies = []
@@ -440,7 +450,7 @@ def build(plan_path, out):
     metadata.update(draft_id=j.identifier(), draft_name=target.name, draft_fold_path=str(target),
                     tm_draft_create=now, tm_draft_modified=now)
     project.update(id=j.identifier(), create_time=now, update_time=now)
-    for asset in assets:
+    for asset in assets + font_assets:
         destination = folder / asset['relative']
         destination.parent.mkdir(parents=True, exist_ok=True)
         if not destination.exists():
@@ -502,7 +512,8 @@ def build(plan_path, out):
               'project_id': project['id'], 'duration_us': timeline['duration'], 'source': str(source),
               'source_files': source_files, 'files': j.files_manifest(folder), 'resources': resources,
               'plan_sha256': j.nd.digest(out / 'plan.json'), 'expected_timeline_sha256': j.nd.digest(out / 'expected-timeline.json'),
-              'operations': applied, 'new_assets': assets, 'unknown_fields_preserved_before_native_save': True,
+              'operations': applied, 'new_assets': assets, 'font_assets': font_assets,
+              'unknown_fields_preserved_before_native_save': True,
               'media_dependencies': media_dependencies,
               'compound_sidecars': compound_sidecars,
               'preserved_native_padding': preserved_native_padding,
@@ -527,6 +538,9 @@ def verify_build(out):
     j.require(helper._decrypt_metadata_in_memory(out / 'draft/draft_info.json') == expected, 'Edited timeline differs from expected full structure')
     compound.validate(expected, basic_validation)
     compound.check_sidecars(expected, Path(record['target']), out / 'draft', preserved)
+    font_assets = fonts.recorded_assets(record, plan)
+    if font_assets is not None:
+        fonts.verify_assets(font_assets, expected, Path(record['target']), out / 'draft')
     j.require(j.files_manifest(Path(record['source'])) == record['source_files'], 'Source changed since the edit snapshot')
     for item in record['media_dependencies']:
         path = Path(item['path'])
@@ -578,7 +592,9 @@ def verify_live(out):
     j.require(record.get('schema') == BUILD_SCHEMA and record.get('runtime_manifest') == j.nd.MANIFEST_SHA, 'Unknown edit build')
     j.require(j.nd.digest(out / 'plan.json') == record['plan_sha256'] and
               j.nd.digest(out / 'expected-timeline.json') == record['expected_timeline_sha256'], 'Edit evidence changed')
-    target = j.nd.DRAFT_ROOT / j.read_json(out / 'plan.json')['name']
+    plan = j.read_json(out / 'plan.json')
+    font_assets = fonts.recorded_assets(record, plan)
+    target = j.nd.DRAFT_ROOT / plan['name']
     j.require(str(target) == record['target'] and target.is_dir() and not target.is_symlink(), 'Invalid edit copy path')
     helper = j.nd.helper()
     actual = helper._decrypt_metadata_in_memory(target / 'draft_info.json')
@@ -616,8 +632,10 @@ def verify_live(out):
                     changed_device_fields.append(key)
             change['restamped_device_field_names'] = changed_device_fields
     quantized = []
-    preserved(compound.normalize_paths(expected, target), compound.normalize_paths(compared, target),
+    normalize = compound.normalize_paths if font_assets is None else fonts.normalize_paths
+    preserved(normalize(expected, target), normalize(compared, target),
               frame_tolerance=math.ceil(1_000_000 / expected.get('fps', 30)), quantized=quantized)
+    checked_fonts = fonts.verify_assets(font_assets, actual, target, target) if font_assets is not None else 0
     compound.check_order(expected, actual)
     checked_compounds = compound.check_sidecars(actual, target, target, preserved)
     files = mirrors(target, record['timeline_id'])
@@ -636,7 +654,7 @@ def verify_live(out):
             'nested_timelines': len(checked_compounds), 'compound_sidecars_verified': checked_compounds,
             'native_empty_companion_identity_changes': companion_identity_changes,
             'native_schema_upgrades': schema_upgrades,
-            'native_frame_quantization': quantized,
+            'native_frame_quantization': quantized, 'font_files_verified': checked_fonts,
             'native_ui_acceptance': 'requires separate open/play/save/cold-reopen evidence'}
 
 
