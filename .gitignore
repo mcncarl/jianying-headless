@@ -12,8 +12,7 @@ venv/
 !.env.example
 
 # Rebuilt locally from our bridge source; not a bundled official engine.
-/bridge/jy14_codec_hardened_11_4
-/bridge/jy14_codec_hardened
+/bridge/jy14_codec_hardened*
 /bridge/jy14_codec_pipe*
 
 # Official applications, binaries, user drafts, media and credential stores

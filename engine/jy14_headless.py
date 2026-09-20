@@ -631,7 +631,16 @@ def copy_xattrs(source_attrs, destination, audit):
     # OS assigns a different provenance value to the new inode. Never strip it,
     # quarantine, or any other attribute to force an equality result.
     changed = sorted(k for k in set(source_attrs) | set(copied) if source_attrs.get(k) != copied.get(k))
-    require(not set(changed) - {'com.apple.provenance'},
+    if 'com.apple.macl' in changed:
+        # On this TCC-protected draft root macOS attaches a SIP-owned 72-byte
+        # access-control label to the new inode even when the source index had
+        # none.  User space cannot remove or replace it.  Accept only this
+        # observed one-way OS addition; removal and mutation remain blocked.
+        require('com.apple.macl' not in source_attrs
+                and isinstance(copied.get('com.apple.macl'), bytes)
+                and len(copied['com.apple.macl']) == 72,
+                'OS access-control attribute changed outside the reviewed addition case')
+    require(not set(changed) - {'com.apple.provenance', 'com.apple.macl'},
             'Extended attributes could not be preserved before commit: ' + ', '.join(changed)
             + '. No security attribute was stripped. If com.apple.macl differs, this environment '
               'needs a reviewed permission-preservation adapter; do not disable SIP or TCC.')

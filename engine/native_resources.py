@@ -101,9 +101,9 @@ def prepare(plan, folder, runtime):
     if not keys:
         return []
     data = catalog()
-    validate_resource_profile(runtime['runtime_profile'], data['runtime_profile'])
     records = []
     for key in keys:
+        validate_resource_profile(runtime['runtime_profile'], data['runtime_profile'], key)
         entry = definition(key)
         source = Path(entry['source'])
         require(source.is_absolute() and source.resolve(strict=True) == source,

@@ -15,13 +15,10 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'engine'))
-from runtime_profiles import PROFILES, validate_identity
+from runtime_profiles import CODEC_PROFILES, PROFILES, validate_identity
 from build_toolchain import select_toolchain, compile_command
 BRIDGE = ROOT / 'bridge'
 APP = Path('/Applications/VideoFusion-macOS.app')
-EXPECTED_CODEC_SHA = 'b6533eb5eb1eea58dfa74fb1d16d3bb580970fe881f587605d358af1745f971d'
-
-
 def require(value, message):
     if not value:
         raise ValueError(message)
@@ -58,33 +55,36 @@ def main(argv=None):
     for name, expected in manifest['source_files'].items():
         require(Path(name).name == name, 'Bridge source names must be simple file names')
         require(digest(BRIDGE / name) == expected, 'Bridge source changed: ' + name)
-    require(manifest['expected_codec_sha256'] == EXPECTED_CODEC_SHA, 'Codec fingerprint changed')
-
-    if args.check_toolchain:
-        _, identity = select_toolchain(manifest['reproduction_environment'], args.developer_dir)
-        print(json.dumps(dict(identity, status='toolchain-matched', compiled=False,
-                              runtime_compatibility_verified=False), ensure_ascii=False))
-        return
+    require(manifest['expected_codec_sha256'] == CODEC_PROFILES['11.5.0']['sha256'],
+            'Legacy codec fingerprint changed')
 
     info = plistlib.loads((APP / 'Contents/Info.plist').read_bytes())
     library = APP / 'Contents/Frameworks/libvideoeditor.dylib'
-    version = validate_identity(info, digest(library))
+    profile_id = validate_identity(info, digest(library))
+    codec_profile = CODEC_PROFILES[profile_id]
+    expected_codec_sha = codec_profile['sha256']
+    if args.check_toolchain:
+        _, identity = select_toolchain(codec_profile['toolchain'], args.developer_dir)
+        print(json.dumps(dict(identity, status='toolchain-matched', compiled=False,
+                              runtime_profile=profile_id,
+                              runtime_compatibility_verified=False), ensure_ascii=False))
+        return
     env = {'PATH': '/usr/bin:/bin:/usr/sbin:/sbin', 'LC_ALL': 'C'}
     run(['/usr/bin/codesign', '--verify', '--deep', '--strict', str(APP)], env=env)
     signature = run(['/usr/bin/codesign', '-dv', '--verbose=4', str(APP)], env=env)
     require('TeamIdentifier=X2JNK7LY8J' in signature.stderr.splitlines(), 'Unexpected Jianying signing identity')
 
-    destination = BRIDGE / 'jy14_codec_hardened_11_4'
+    destination = BRIDGE / codec_profile['filename']
     already_installed = destination.exists() or destination.is_symlink()
     if already_installed:
-        require(digest(destination) == EXPECTED_CODEC_SHA and os.access(destination, os.X_OK),
+        require(digest(destination) == expected_codec_sha and os.access(destination, os.X_OK),
                 'An unexpected codec file already exists; it was not overwritten')
         if not args.rebuild_check:
-            print(json.dumps({'status': 'already-valid', 'codec_sha256': EXPECTED_CODEC_SHA,
-                              'app_version': version, 'network_called': False}))
+            print(json.dumps({'status': 'already-valid', 'codec_sha256': expected_codec_sha,
+                              'runtime_profile': profile_id, 'network_called': False}))
             return
 
-    env, toolchain = select_toolchain(manifest['reproduction_environment'], args.developer_dir)
+    env, toolchain = select_toolchain(codec_profile['toolchain'], args.developer_dir)
 
     work = ROOT / 'work'
     work.mkdir(mode=0o700, exist_ok=True)
@@ -98,16 +98,17 @@ def main(argv=None):
     compiler = run(['/usr/bin/xcrun', 'clang++', '--version'], env=env).stdout
     result = run(command, env=env)
     actual = digest(built)
-    report = {'schema': 'jianying-headless-codec-build/v1', 'status': 'built', 'app_version': version,
+    report = {'schema': 'jianying-headless-codec-build/v1', 'status': 'built',
+              'runtime_profile': profile_id,
               'compiler': compiler, 'toolchain': toolchain, 'command': command, 'codec_sha256': actual,
-              'expected_codec_sha256': EXPECTED_CODEC_SHA, 'stderr': result.stderr,
+              'expected_codec_sha256': expected_codec_sha, 'stderr': result.stderr,
               'network_called': False, 'official_library_copied': False, 'app_modified': False}
     with (job / 'build-report.json').open('x', encoding='utf-8') as stream:
         json.dump(report, stream, ensure_ascii=False, indent=2)
         stream.write('\n')
-    require(actual == EXPECTED_CODEC_SHA,
+    require(actual == expected_codec_sha,
             'Compiler output differs from the reviewed codec. No runtime pin was changed; inspect ' + str(job))
-    require(digest(library) == PROFILES[version], 'The native library changed while compiling')
+    require(digest(library) == PROFILES[profile_id], 'The native library changed while compiling')
     for name, expected in manifest['source_files'].items():
         require(digest(BRIDGE / name) == expected, 'Bridge source changed while compiling: ' + name)
     run(['/usr/bin/codesign', '--verify', '--strict', str(built)], env=env)
@@ -120,8 +121,9 @@ def main(argv=None):
         stream.write(built.read_bytes())
         stream.flush()
         os.fsync(stream.fileno())
-    require(digest(destination) == EXPECTED_CODEC_SHA, 'Installed local codec fingerprint differs')
-    print(json.dumps({'status': 'built-and-verified', 'codec_sha256': actual, 'app_version': version,
+    require(digest(destination) == expected_codec_sha, 'Installed local codec fingerprint differs')
+    print(json.dumps({'status': 'built-and-verified', 'codec_sha256': actual,
+                      'runtime_profile': profile_id,
                       'audit_directory': str(job), 'network_called': False, 'app_modified': False}, ensure_ascii=False))
 
 

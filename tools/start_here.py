@@ -22,7 +22,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'engine'))
 sys.path.insert(0, str(ROOT / 'tools'))
-from runtime_profiles import validate_identity
+from runtime_profiles import CODEC_PROFILES, EXPORT_PROFILES, validate_identity
 from build_toolchain import select_toolchain
 
 APP = Path('/Applications/VideoFusion-macOS.app')
@@ -57,23 +57,25 @@ def check():
     for tool in ('ffmpeg', 'ffprobe'):
         add('PASS' if shutil.which(tool) else 'FAIL', tool,
             '已找到' if shutil.which(tool) else '未找到；安装后重新打开终端')
-    if supported:
+    profile_id = None
+    try:
+        info = plistlib.loads((APP / 'Contents/Info.plist').read_bytes())
+        profile_id = validate_identity(info, digest(APP / 'Contents/Frameworks/libvideoeditor.dylib'))
+        add('PASS', '剪映身份', profile_id + '，程序库指纹匹配；完整签名由桥接构建和正式写入检查')
+    except (OSError, ValueError, KeyError) as error:
+        add('FAIL', '剪映身份', str(error) + '；需要匹配的官方安装，不能修改哈希绕过')
+    if supported and profile_id:
         try:
-            manifest = json.loads((ROOT / 'bridge/SOURCE_MANIFEST.json').read_text())
-            _, toolchain = select_toolchain(manifest['reproduction_environment'])
+            _, toolchain = select_toolchain(CODEC_PROFILES[profile_id]['toolchain'])
             add('PASS', '已验工具链', toolchain['compiler'] + ' / SDK ' + toolchain['sdk_version']
                 + ' / linker ' + toolchain['linker'] + '；最终仍须校验编译产物')
         except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
             # An already-verified codec does not need recompilation.
-            add('WARN' if (ROOT / 'bridge/jy14_codec_hardened_11_4').is_file() else 'FAIL',
+            codec_name = CODEC_PROFILES[profile_id]['filename']
+            add('WARN' if (ROOT / 'bridge' / codec_name).is_file() else 'FAIL',
                 '编译工具', str(error))
-    try:
-        info = plistlib.loads((APP / 'Contents/Info.plist').read_bytes())
-        version = validate_identity(info, digest(APP / 'Contents/Frameworks/libvideoeditor.dylib'))
-        add('PASS', '剪映身份', version + '，程序库指纹匹配；完整签名由桥接构建和正式写入检查')
-    except (OSError, ValueError, KeyError) as error:
-        add('FAIL', '剪映身份', str(error) + '；需要匹配的官方安装，不能修改哈希绕过')
-    codec = ROOT / 'bridge/jy14_codec_hardened_11_4'
+    codec = ROOT / 'bridge' / (CODEC_PROFILES[profile_id]['filename']
+                               if profile_id else 'jy14_codec_hardened_11_4')
     if not codec.exists():
         add('WARN', '桥接组件', '首次下载尚未构建；下一步运行 python3 tools/build_native_codec.py')
     else:
@@ -142,6 +144,7 @@ def build(raw):
     doctor = run([sys.executable, str(ENTRY), 'doctor'])
     if doctor.returncode:
         raise ValueError('doctor 未通过。先运行 check 和桥接构建。\n' + doctor.stderr)
+    runtime = json.loads(doctor.stdout)
     if raw is None:
         if not sys.stdin.isatty():
             raise ValueError('非交互运行需提供 --source 视频路径。')
@@ -171,10 +174,14 @@ def build(raw):
     commands = {
         'publish': [sys.executable, str(ENTRY), 'publish', '--build', str(job / 'build'), '--audit', str(job / 'publish-audit')],
         'verify': [sys.executable, str(ENTRY), 'verify', '--build', str(job / 'build'), '--report', str(job / 'after-native-save.json')],
-        'export': [sys.executable, str(ENTRY), 'export', '--build', str(job / 'build'), '--out', str(job / 'export')],
     }
+    export_supported = runtime['runtime_profile'] in EXPORT_PROFILES
+    if export_supported:
+        commands['export'] = [sys.executable, str(ENTRY), 'export', '--build', str(job / 'build'),
+                              '--out', str(job / 'export')]
     report = {'status': 'build-verified', 'name': plan['name'], 'build': str(job / 'build'),
               'source_unchanged': True, 'draft_registered': False, 'video_exported': False,
+              'native_export_supported': export_supported,
               'commands': {key: shlex.join(value) for key, value in commands.items()}}
     (job / 'next-steps.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     labels = {'publish': '保存工作并完全退出剪映后，登记到本机首页',
@@ -182,13 +189,20 @@ def build(raw):
               'export': '可选：导出最初构建的快照，不包含后来手工修改'}
     notes = '# ' + plan['name'] + '\n'
     for key, label in labels.items():
+        if key not in report['commands']:
+            continue
         notes += '\n## ' + label + '\n\n```bash\n' + report['commands'][key] + '\n```\n'
+    if not export_supported:
+        notes += '\n## 原生导出\n\n当前精确运行档案仅完成可编辑草稿验收；原生 MP4 导出保持禁用。\n'
     (job / 'next-steps.md').write_text(notes)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     print('\n尚未写入剪映首页。保存工作并完全退出剪映后，再复制执行下面这一行：\n' +
           report['commands']['publish'])
     print('\n打开、播放、保存、退出并冷重开检查后，再次退出剪映，执行：\n' + report['commands']['verify'])
-    print('\n可选：需要 MP4 时导出最初快照（不含后续手工修改）：\n' + report['commands']['export'])
+    if export_supported:
+        print('\n可选：需要 MP4 时导出最初快照（不含后续手工修改）：\n' + report['commands']['export'])
+    else:
+        print('\n当前精确运行档案仅完成可编辑草稿验收；原生 MP4 导出保持禁用。')
     print('\n以上可复制命令也保存在：' + str(job / 'next-steps.md'))
     return 0
 

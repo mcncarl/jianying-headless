@@ -14,7 +14,7 @@ import shutil
 import subprocess
 import sys
 from types import SimpleNamespace
-from runtime_profiles import PROFILES, PRIMARY_VERSION, validate_identity
+from runtime_profiles import CODEC_PROFILES, PRIMARY_VERSION, resolve_identity
 
 APP = Path('/Applications/VideoFusion-macOS.app')
 DRAFT_ROOT = Path.home() / 'Movies/JianyingPro/User Data/Projects/com.lveditor.draft'
@@ -25,7 +25,6 @@ MANIFEST_SHA = '2fea820b26d503940526c345ce8e9bd87c25f0c1c8b1c4a02aa8edba317e33dd
 IO_MANIFEST_SHA = '473b05370d77f0835e11f0fde4f3cec2eec0b00777aa0018441bc9e7b53bb300'
 PINS = {
     'runtime_io.py': '487cf8c65bddad2ecdb351b16996d923bd6bcc6861dba12e801f679821b4ef70',
-    'jy14_codec_hardened_11_4': 'b6533eb5eb1eea58dfa74fb1d16d3bb580970fe881f587605d358af1745f971d',
 }
 BUNDLE_ID = 'com.lemon.lvpro'
 TEAM = 'X2JNK7LY8J'
@@ -63,14 +62,24 @@ def doctor():
     info = plistlib.loads((APP / 'Contents/Info.plist').read_bytes())
     library = APP / 'Contents/Frameworks/libvideoeditor.dylib'
     fingerprint = digest(library)
-    version = validate_identity(info, fingerprint)
+    identity = resolve_identity(info, fingerprint)
+    profile_id = identity['profile_id']
+    codec_profile = CODEC_PROFILES[profile_id]
+    codec_path = BACKEND / codec_profile['filename']
+    if not codec_path.is_file() or codec_path.is_symlink():
+        raise ValueError('IO/codec component unavailable: ' + codec_profile['filename']
+                         + '; build with tools/build_native_codec.py')
+    if digest(codec_path) != codec_profile['sha256']:
+        raise ValueError('IO/codec component changed: ' + codec_profile['filename'])
     if not all(shutil.which(name) for name in ('ffmpeg', 'ffprobe')):
         raise ValueError('ffmpeg and ffprobe are required')
-    return {'status': 'ok', 'app_version': version, 'app_build': version,
-            'primary_version': PRIMARY_VERSION, 'compatibility_mode': version != PRIMARY_VERSION,
+    return {'status': 'ok', 'app_version': identity['app_version'],
+            'app_build': identity['app_build'], 'profile_id': profile_id,
+            'primary_version': PRIMARY_VERSION, 'compatibility_mode': profile_id != PRIMARY_VERSION,
             'bundle_id': BUNDLE_ID, 'libvideoeditor_sha256': fingerprint,
-            'runtime_profile': 'jy14-headless-macos-' + version,
-            'codec_sha256': PINS['jy14_codec_hardened_11_4'],
+            'runtime_profile': identity['runtime_profile'],
+            'codec_filename': codec_profile['filename'],
+            'codec_sha256': codec_profile['sha256'],
             'runtime_hashes_verified': True, 'network_called': False,
             'full_signature_check': 'required before live creation'}
 
@@ -90,7 +99,7 @@ def validate_runtime():
 
 
 def helper():
-    doctor()
+    runtime = doctor()
     name = '_jy14_headless_pinned_io_' + hashlib.sha256(str(BACKEND).encode()).hexdigest()[:16]
     h = sys.modules.get(name)
     if h is None:
@@ -98,6 +107,9 @@ def helper():
         h = importlib.util.module_from_spec(spec)
         sys.modules[name] = h
         spec.loader.exec_module(h)
+        codec_profile = CODEC_PROFILES[runtime['profile_id']]
+        h.CODEC_PATH = BACKEND / codec_profile['filename']
+        h.REQUIRED_CODEC_SHA256 = codec_profile['sha256']
     names = ('_decrypt_metadata_in_memory', '_encrypt_metadata_from_memory',
              '_ensure_editor_closed', '_snapshot_file', '_parse_strict_json',
              '_revalidate_snapshot', '_acquire_directory_transaction_lock',

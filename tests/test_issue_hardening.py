@@ -271,11 +271,27 @@ class PublishRecoveryTests(unittest.TestCase):
 
 
 class AttributePolicyTests(unittest.TestCase):
-    def test_macl_and_quarantine_changes_remain_blocked(self):
-        for name in ('com.apple.macl', 'com.apple.quarantine'):
-            with self.subTest(name=name), patch.object(j, 'write'), patch.object(j.subprocess, 'run'), patch.object(j, 'read_xattrs', return_value={name: b'changed'}):
-                with self.assertRaisesRegex(ValueError, name):
-                    j.copy_xattrs({name: b'original'}, Path('/unused'), Path('/audit'))
+    def test_reviewed_os_macl_addition_is_accepted(self):
+        attrs = {'com.apple.provenance': b'old', 'com.apple.quarantine': b'kept'}
+        copied = dict(attrs, **{'com.apple.provenance': b'new',
+                               'com.apple.macl': b'\0' * 72})
+        with patch.object(j, 'write'), patch.object(j.subprocess, 'run'), \
+                patch.object(j, 'read_xattrs', return_value=copied):
+            _, changed = j.copy_xattrs(attrs, Path('/unused'), Path('/audit'))
+        self.assertEqual(changed, ['com.apple.macl', 'com.apple.provenance'])
+
+    def test_macl_removal_mutation_and_quarantine_changes_remain_blocked(self):
+        cases = [
+            ({'com.apple.macl': b'original'}, {}),
+            ({'com.apple.macl': b'original'}, {'com.apple.macl': b'changed'}),
+            ({}, {'com.apple.macl': b'wrong-size'}),
+            ({'com.apple.quarantine': b'original'}, {'com.apple.quarantine': b'changed'}),
+        ]
+        for source, copied in cases:
+            with self.subTest(source=source, copied=copied), patch.object(j, 'write'), \
+                    patch.object(j.subprocess, 'run'), patch.object(j, 'read_xattrs', return_value=copied):
+                with self.assertRaises(ValueError):
+                    j.copy_xattrs(source, Path('/unused'), Path('/audit'))
 
 
 if __name__ == '__main__':

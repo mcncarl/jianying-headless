@@ -71,8 +71,13 @@ class FirstDraftTests(unittest.TestCase):
         calls = []
         def success(command, timeout=60):
             calls.append(command)
-            return subprocess.CompletedProcess(command, 0,
-                json.dumps(self.media) if command[0] == 'ffprobe' else '{}', '')
+            if command[0] == 'ffprobe':
+                output = json.dumps(self.media)
+            elif 'doctor' in command:
+                output = json.dumps({'runtime_profile': 'jy14-headless-macos-11.5.0'})
+            else:
+                output = '{}'
+            return subprocess.CompletedProcess(command, 0, output, '')
         with patch.object(start, 'ROOT', self.folder), patch.object(start, 'run', side_effect=success), contextlib.redirect_stdout(io.StringIO()):
             start.build(str(self.source))
             start.build(str(self.source))
@@ -86,6 +91,26 @@ class FirstDraftTests(unittest.TestCase):
             self.assertEqual(start.shlex.split(result['commands']['publish'])[2], 'publish')
             self.assertIn(result['commands']['export'], (job / 'next-steps.md').read_text())
         self.assertEqual(self.source.read_bytes(), b'unit test bytes')
+
+    def test_draft_only_profile_does_not_offer_export(self):
+        def success(command, timeout=60):
+            if command[0] == 'ffprobe':
+                output = json.dumps(self.media)
+            elif 'doctor' in command:
+                output = json.dumps({'runtime_profile':
+                                     'jy14-headless-macos-11.5.3-beta2'})
+            else:
+                output = '{}'
+            return subprocess.CompletedProcess(command, 0, output, '')
+        with patch.object(start, 'ROOT', self.folder), \
+                patch.object(start, 'run', side_effect=success), \
+                contextlib.redirect_stdout(io.StringIO()):
+            start.build(str(self.source))
+        job = next((self.folder / 'work').iterdir())
+        result = json.loads((job / 'next-steps.json').read_text())
+        self.assertFalse(result['native_export_supported'])
+        self.assertNotIn('export', result['commands'])
+        self.assertIn('原生 MP4 导出保持禁用', (job / 'next-steps.md').read_text())
 
 
 if __name__ == '__main__':
