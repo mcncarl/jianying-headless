@@ -67,6 +67,47 @@ class MediaExtensionTests(unittest.TestCase):
             self.assertEqual(changed, ['com.apple.provenance'])
             self.assertTrue(all(c.args[0][1] == '-wx' for c in command.call_args_list))
 
+    def test_com_apple_macl_difference_is_kernel_owned(self):
+        # Issue #5: when the publish target lives inside a TCC-protected
+        # directory the kernel rewrites com.apple.macl on every inode, and
+        # the attribute is SIP-protected so user space cannot preserve it.
+        # This is the same class of OS-owned bookkeeping as provenance and
+        # must be tolerated by copy_xattrs; the diff is recorded in
+        # os_attribute_changes, not used to deny the publish.
+        audit = WORK / 'xattr-macl-test'
+        audit.mkdir()
+        attrs = {'com.apple.macl': b'old-uuid-list', 'com.apple.quarantine': b'preserved'}
+        copied = dict(attrs, **{'com.apple.macl': b'kernel-appended-uuid'})
+        with patch.object(j.subprocess, 'run') as command, \
+                patch.object(j, 'read_xattrs', return_value=copied):
+            got, changed = j.copy_xattrs(attrs, audit / 'staged', audit)
+            self.assertEqual(got, copied)
+            self.assertEqual(changed, ['com.apple.macl'])
+            # All xattr writes went through -wx; no -d (stripping) was used.
+            self.assertTrue(all(c.args[0][1] == '-wx' for c in command.call_args_list))
+
+    def test_macl_and_provenance_both_tolerated(self):
+        # The two known OS-owned bookkeeping attributes can differ
+        # simultaneously; both are reported, both are tolerated.
+        audit = WORK / 'xattr-both-test'
+        audit.mkdir()
+        attrs = {'com.apple.macl': b'a', 'com.apple.provenance': b'old', 'com.apple.quarantine': b'q'}
+        copied = {'com.apple.macl': b'a-prime', 'com.apple.provenance': b'new', 'com.apple.quarantine': b'q'}
+        with patch.object(j.subprocess, 'run'), patch.object(j, 'read_xattrs', return_value=copied):
+            got, changed = j.copy_xattrs(attrs, audit / 'staged', audit)
+            self.assertEqual(sorted(changed), ['com.apple.macl', 'com.apple.provenance'])
+
+    def test_unknown_xattr_diff_still_rejected(self):
+        # The OS_OWNED_XATTRS allow-list is closed: any other changed
+        # attribute -- even alongside the allowed ones -- still aborts.
+        audit = WORK / 'xattr-unknown-test'
+        audit.mkdir()
+        attrs = {'com.apple.macl': b'a', 'user.custom': b'old'}
+        copied = {'com.apple.macl': b'a-prime', 'user.custom': b'new'}
+        with patch.object(j.subprocess, 'run'), patch.object(j, 'read_xattrs', return_value=copied):
+            with self.assertRaisesRegex(ValueError, 'before commit'):
+                j.copy_xattrs(attrs, audit / 'staged', audit)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

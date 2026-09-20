@@ -272,10 +272,24 @@ class PublishRecoveryTests(unittest.TestCase):
 
 class AttributePolicyTests(unittest.TestCase):
     def test_macl_and_quarantine_changes_remain_blocked(self):
-        for name in ('com.apple.macl', 'com.apple.quarantine'):
-            with self.subTest(name=name), patch.object(j, 'write'), patch.object(j.subprocess, 'run'), patch.object(j, 'read_xattrs', return_value={name: b'changed'}):
-                with self.assertRaisesRegex(ValueError, name):
-                    j.copy_xattrs({name: b'original'}, Path('/unused'), Path('/audit'))
+        # com.apple.macl is kernel/TCC-owned metadata describing which app may
+        # open the file. The kernel rewrites it on every inode inside a
+        # TCC-protected directory and the attribute is SIP-protected, so the
+        # publishing process cannot preserve it. Treated the same as
+        # com.apple.provenance (issue #5): the diff is recorded in
+        # os_attribute_changes, not used to abort the publish.
+        audit = Path('/audit')
+        with patch.object(j, 'write'), patch.object(j.subprocess, 'run'), \
+                patch.object(j, 'read_xattrs', return_value={'com.apple.macl': b'changed'}):
+            got, changed = j.copy_xattrs({'com.apple.macl': b'original'}, Path('/unused'), audit)
+            self.assertEqual(changed, ['com.apple.macl'])
+        # com.apple.quarantine is a real security attribute and must still
+        # be rejected on loss: the file must remain quarantined.
+        with self.subTest(name='com.apple.quarantine'), \
+                patch.object(j, 'write'), patch.object(j.subprocess, 'run'), \
+                patch.object(j, 'read_xattrs', return_value={}):
+            with self.assertRaisesRegex(ValueError, 'com.apple.quarantine'):
+                j.copy_xattrs({'com.apple.quarantine': b'original'}, Path('/unused'), audit)
 
 
 if __name__ == '__main__':

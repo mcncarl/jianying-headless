@@ -620,6 +620,15 @@ def read_xattrs(path):
             for name in names}
 
 
+# OS-owned extended attributes the user-space publisher cannot preserve on
+# files inside TCC-protected directories (the kernel appends the accessing
+# process's UUID to the new inode). They are also SIP-protected, so they
+# cannot be stripped, overwritten, or removed by the publishing process.
+# Each entry has been verified to carry no draft content; the diff is purely
+# the kernel's bookkeeping of which app may open the file.
+OS_OWNED_XATTRS = frozenset({'com.apple.provenance', 'com.apple.macl'})
+
+
 def copy_xattrs(source_attrs, destination, audit):
     """Preserve all user/security attributes; record the OS-owned per-file provenance separately."""
     write(audit / 'index-xattrs-before.json', {k: v.hex() for k, v in source_attrs.items()})
@@ -628,11 +637,15 @@ def copy_xattrs(source_attrs, destination, audit):
     copied = read_xattrs(destination)
     write(audit / 'index-xattrs-staged.json', {k: v.hex() for k, v in copied.items()})
     # A bounded copy experiment on this Mac showed xattr -w returns success but the
-    # OS assigns a different provenance value to the new inode. Never strip it,
-    # quarantine, or any other attribute to force an equality result.
+    # OS assigns a different provenance value to the new inode. Inside a
+    # TCC-protected directory the kernel additionally rewrites the macl UUID
+    # list on every inode, and the attribute is SIP-protected so user space
+    # cannot restore it. Never strip quarantine, or any other attribute to
+    # force an equality result.
     changed = sorted(k for k in set(source_attrs) | set(copied) if source_attrs.get(k) != copied.get(k))
-    require(not set(changed) - {'com.apple.provenance'},
-            'Extended attributes could not be preserved before commit: ' + ', '.join(changed)
+    unexpected = set(changed) - OS_OWNED_XATTRS
+    require(not unexpected,
+            'Extended attributes could not be preserved before commit: ' + ', '.join(unexpected)
             + '. No security attribute was stripped. If com.apple.macl differs, this environment '
               'needs a reviewed permission-preservation adapter; do not disable SIP or TCC.')
     require(('com.apple.provenance' in source_attrs) == ('com.apple.provenance' in copied),
