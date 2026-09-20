@@ -378,19 +378,44 @@ def settings_for(timeline, bitrate, timeout):
 
 
 def sandbox_profile(out):
-    literal = json.dumps(str(out))
+    # sandbox-exec does not interpret JSON-style \uXXXX escapes. Writing the path
+    # through json.dumps (ensure_ascii=True) turns non-ASCII bytes into escape
+    # sequences, and the SBPL subpath then fails to match any real directory
+    # on disk; the catch-all (deny file-read-data (subpath "/Users")) then
+    # wins and the helper cannot read timeline.json. Encode the path as a raw
+    # UTF-8 string literal and refuse characters that would break the SBPL
+    # grammar (a path containing a literal newline, quote, or backslash is
+    # never produced by pathlib on this platform).
+    text = str(out)
+    if any(ch in text for ch in '"\\\n'):
+        raise ValueError('Export path must not contain quotes, backslashes or newlines')
+    literal = '"' + text + '"'
     return ('(version 1)\n(allow default)\n(deny network*)\n(deny file-write*)\n'
             '(deny file-read-data (subpath "/Users"))\n'
             '(deny file-read-data (subpath "/Library/Keychains"))\n'
             f'(allow file-read-data (subpath {literal}))\n'
             f'(allow file-write* (subpath {literal}))\n'
-            '(allow file-write* (literal "/dev/null"))\n').encode()
+            '(allow file-write* (literal "/dev/null"))\n').encode('utf-8')
+
+
+# Major-brand whitelist for the native MP4 container check. Repeated values
+# joined by ';' (e.g. 'isom;isom') are produced by Jianying 11.5.0's MP4
+# writer when the brand is written twice; any combination drawn from this
+# set is still a standard MP4, but unknown brands (or mixed-in malicious
+# values) must still be rejected.
+MP4_BRANDS = frozenset({'isom', 'mp41', 'mp42'})
 
 
 def validate_probe(info, settings, duration_us, audio_expected):
     fmt = info.get('format', {})
-    j.require(fmt.get('tags', {}).get('major_brand') in ('isom', 'mp41', 'mp42'),
-              'Native output is not a standard MP4 container')
+    major_brand = fmt.get('tags', {}).get('major_brand') or ''
+    # ffprobe returns duplicated brands joined by ';' (e.g. 'isom;isom' from
+    # 11.5.0). Split on ';' and check the resulting set against the
+    # whitelist: a repeated whitelisted brand is accepted, an unknown brand
+    # is not. Empty segments (from a trailing or doubled ';') are themselves
+    # not whitelisted and therefore still rejected.
+    brands = {value.strip() for value in major_brand.split(';')}
+    j.require(brands and brands <= MP4_BRANDS, 'Native output is not a standard MP4 container')
     video = [s for s in info.get('streams', []) if s.get('codec_type') == 'video']
     audio = [s for s in info.get('streams', []) if s.get('codec_type') == 'audio']
     j.require(len(video) == 1 and video[0].get('codec_name') == 'h264', 'Expected one H.264 stream')

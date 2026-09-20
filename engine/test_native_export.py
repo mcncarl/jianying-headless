@@ -107,6 +107,34 @@ class ExportGuards(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'MP4 container'):
             e.validate_probe(self.probe, self.settings, 6_000_000, True)
 
+    def test_1150_duplicated_brand_accepted(self):
+        # Jianying 11.5.0's MP4 writer writes the major_brand twice; ffprobe
+        # joins them with ';' (e.g. 'isom;isom'). A repeated whitelisted brand
+        # must still be recognized as a standard MP4 container.
+        for brand in ('isom;isom', 'mp41;mp41', 'mp42;mp42'):
+            with self.subTest(brand=brand):
+                self.probe['format']['tags']['major_brand'] = brand
+                value = e.validate_probe(self.probe, self.settings, 6_000_000, True)
+                self.assertEqual(value['major_brand'], brand)
+
+    def test_whitelisted_brand_combinations_accepted(self):
+        # Any combination of values drawn from the standard-MP4 brand set
+        # (isom, mp41, mp42) is still a standard MP4 container.
+        for brand in ('isom;mp42', 'mp42;isom', 'isom;mp41;mp42'):
+            with self.subTest(brand=brand):
+                self.probe['format']['tags']['major_brand'] = brand
+                value = e.validate_probe(self.probe, self.settings, 6_000_000, True)
+                self.assertEqual(value['major_brand'], brand)
+
+    def test_mixed_brand_with_unknown_value_rejected(self):
+        # Adding any non-whitelisted brand (even alongside whitelisted ones)
+        # must still be rejected: do not silently accept a forged container.
+        for brand in ('isom;malicious', 'malicious;isom', 'qt  ;isom', 'mp42;'):
+            with self.subTest(brand=brand):
+                self.probe['format']['tags']['major_brand'] = brand
+                with self.assertRaisesRegex(ValueError, 'MP4 container'):
+                    e.validate_probe(self.probe, self.settings, 6_000_000, True)
+
     def test_truncated_video_rejected(self):
         self.probe['streams'][0]['nb_frames'] = '75'
         with self.assertRaisesRegex(ValueError, 'frame count'):
@@ -288,6 +316,40 @@ class ExportGuards(unittest.TestCase):
         self.assertNotEqual(forbidden.returncode, 0)
         self.assertNotEqual(write.returncode, 0)
         self.assertFalse((self.root / 'forbidden-write').exists())
+
+    def test_sandbox_profile_writes_non_ascii_path_as_utf8_literal(self):
+        # sandbox-exec does not interpret JSON-style \uXXXX escapes. The
+        # profile must carry the path as a raw UTF-8 string literal so that
+        # subpath matches the real on-disk directory.
+        import re as _re
+        chinese = self.root / '中文目录-工作区' / 'export-x'
+        profile = e.sandbox_profile(chinese).decode('utf-8')
+        literal = _re.search(r'\(allow file-read-data \(subpath (.+?)\)\)', profile).group(1)
+        # The literal is the bare UTF-8 path inside SBPL quotes -- no escape sequences.
+        self.assertNotIn('\\u', literal)
+        self.assertIn(str(chinese), literal)
+
+    def test_sandbox_profile_real_non_ascii_path_allows_read(self):
+        # End-to-end: with a Chinese-named work directory the buggy profile
+        # denied every read (issue #11); the fixed profile must permit it.
+        chinese = self.root / '剪映-issue-11-test' / 'export-y'
+        chinese.mkdir(parents=True)
+        marker = chinese / 'timeline.json'
+        marker.write_text('{"ok":true}')
+        profile = chinese / 'profile.sb'
+        profile.write_bytes(e.sandbox_profile(chinese))
+        permitted = subprocess.run(['/usr/bin/sandbox-exec', '-f', str(profile),
+                                    '/bin/cat', str(marker)], capture_output=True)
+        self.assertEqual(permitted.returncode, 0)
+        self.assertIn('"ok":true', permitted.stdout.decode('utf-8'))
+
+    def test_sandbox_profile_rejects_chars_that_break_sbpl_syntax(self):
+        # A literal newline, double-quote, or backslash in the path would
+        # break the SBPL grammar. Refuse to emit a broken profile.
+        for bad in ('/tmp/has"quote', '/tmp/has\nnewline', '/tmp/has\\backslash'):
+            with self.subTest(bad=bad):
+                with self.assertRaisesRegex(ValueError, 'must not contain'):
+                    e.sandbox_profile(bad)
 
 
 if __name__ == '__main__':
