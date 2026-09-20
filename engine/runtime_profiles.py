@@ -59,6 +59,7 @@ CODEC_PROFILES['11.5.3-beta2'] = {
 EXPORT_PROFILES = frozenset(PROFILE_PREFIX + v for v in ('11.5.0', '11.4.2'))
 RESOURCE_RUNTIME_PROFILES = frozenset(PROFILE_PREFIX + v for v in ('11.5.0', '11.4.2'))
 RESOURCE_CAPTURE_PROFILE = PROFILE_PREFIX + '11.4.2'
+BETA_RESOURCE_KEYS = frozenset(('transition/dissolve', 'effect/light-shake'))
 TIMELINE_SCHEMAS = frozenset((('185.0.0', 360000), ('187.0.0', 360000)))
 SCHEMA_187_PROFILES = frozenset(PROFILE_PREFIX + v for v in ('11.5.0', '11.5.3-beta2'))
 SAVED_APP_VERSIONS = {
@@ -128,6 +129,9 @@ def validate_export_profiles(build_profile, runtime_profile):
         raise ValueError('Build runtime differs from the installed editor; rebuild or edit a copy on the current runtime')
 
 
-def validate_resource_profile(runtime_profile, capture_profile):
-    if capture_profile != RESOURCE_CAPTURE_PROFILE or runtime_profile not in RESOURCE_RUNTIME_PROFILES:
+def validate_resource_profile(runtime_profile, capture_profile, resource_key=None):
+    beta_allowed = (runtime_profile == PROFILE_PREFIX + '11.5.3-beta2'
+                    and resource_key in BETA_RESOURCE_KEYS)
+    if (capture_profile != RESOURCE_CAPTURE_PROFILE
+            or (runtime_profile not in RESOURCE_RUNTIME_PROFILES and not beta_allowed)):
         raise ValueError('Native resources need a reviewed runtime profile/capture pairing')

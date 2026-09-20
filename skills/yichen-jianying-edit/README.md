@@ -11,7 +11,8 @@ Skill 公开收录于 [yichen-skills](https://github.com/mcncarl/yichen-skills/t
 1. 检出 [mcncarl/jianying-headless](https://github.com/mcncarl/jianying-headless) 的公开源码。
 2. 在核心仓库运行 `python3 tools/build_native_codec.py`，然后执行本 Skill 的 `doctor`。
 3. 将本目录作为一个完整 Skill 安装到宿主支持的技能目录；不要只复制 `SKILL.md`。
-4. Skill 不在核心仓库内时，设置 `JIANYING_HEADLESS_ROOT=/absolute/path/to/jianying-headless`。
+4. Skill 与核心仓库同处一个宿主目录时会自动发现相邻的 `jianying-headless`；其他布局设置
+   `JIANYING_HEADLESS_ROOT=/absolute/path/to/jianying-headless`。
 
 ```bash
 python3 /absolute/path/to/yichen-jianying-edit/scripts/headless_draft.py doctor

@@ -42,6 +42,16 @@ class PackagingTests(unittest.TestCase):
         result = self.cli(entry, JIANYING_HEADLESS_ROOT=str(ROOT))
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_installed_skill_discovers_sibling_checkout(self):
+        skill = self.folder / 'skills' / 'yichen-jianying-edit' / 'scripts'
+        skill.mkdir(parents=True)
+        entry = skill / 'headless_draft.py'
+        shutil.copyfile(ENTRY, entry)
+        (self.folder / 'jianying-headless').symlink_to(ROOT, target_is_directory=True)
+        result = self.cli(entry)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('verify-build', result.stdout)
+
     def test_missing_configured_checkout_fails_before_output(self):
         result = self.cli(JIANYING_HEADLESS_ROOT=str(self.folder / 'missing'))
         self.assertNotEqual(result.returncode, 0)

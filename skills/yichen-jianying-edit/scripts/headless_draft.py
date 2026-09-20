@@ -15,7 +15,8 @@ def project_root():
             raise SystemExit('JIANYING_HEADLESS_ROOT must be an absolute checkout path')
         candidates = [path.resolve()]
     else:
-        candidates = list(Path(__file__).resolve().parents)
+        parents = list(Path(__file__).resolve().parents)
+        candidates = parents + [path / 'jianying-headless' for path in parents]
     for path in candidates:
         marker = path / 'project.json'
         if marker.is_file() and not marker.is_symlink():
@@ -33,11 +34,11 @@ PROJECT_ROOT = project_root()
 BACKEND = PROJECT_ROOT / 'engine'
 PINS = {
     'native_fonts.py': 'ddd7b4c1ecd55890bd645c14930f2c5f6687794691c2280daa32673e048da5e6',
-    'runtime_profiles.py': '1ae5d95b525b022521bef50cf6443987e98760a1d239bca65307cd40c0b7b2e1',
+    'runtime_profiles.py': 'fb4f34a431df6b5892eb798e783fb500326a96bcf6a50fb43a5704aab46f9c19',
     'jy14_headless.py': '1354d960d13ce12bb3b7ebcd5455aebf9c02a1909befe492da6c2e65a506feea',
     'native_motion.py': '5d743caaa38c921779166e5663d36f72a0c3fdb130a690ac3942a7adcf62d6c2',
     'native_effects.py': 'c46b2fc9221dd613f220564b752e532f8f3753dd5595aaffc24f41d5236e4e97',
-    'native_resources.py': '9bddfbb1cd688cebd69ac49f9bbf63c242522d9666a2ef7b412fe097113f68f2',
+    'native_resources.py': '2913222ac0d6165f72fdd471251ca761f1538ae2d3c0df264c71363a9638d296',
     'native_visual_effects.py': '15df7e56cc7d575a552c180e72ec712f136c618d271b2f3ad2d32dd5929e844c',
     'native-resource-catalog.json': '97af2df27463a9183fb1aa8f2ef534b37a644cb196f340fe88fdc50b456abde9',
     'native_compound.py': 'eb9e7d5544e1726be291912c47a5cc917b80180a231242ca30b7b5aaf68f5bfc',

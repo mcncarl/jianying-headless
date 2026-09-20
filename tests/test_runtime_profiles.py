@@ -64,9 +64,13 @@ class RuntimeProfiles(unittest.TestCase):
     def test_resource_pairing_keeps_capture_provenance(self):
         for p in profiles.RESOURCE_RUNTIME_PROFILES:
             profiles.validate_resource_profile(p,profiles.RESOURCE_CAPTURE_PROFILE)
-        with self.assertRaises(ValueError):
+        for key in profiles.BETA_RESOURCE_KEYS:
             profiles.validate_resource_profile(
-                profiles.PROFILE_PREFIX+'11.5.3-beta2', profiles.RESOURCE_CAPTURE_PROFILE)
+                profiles.PROFILE_PREFIX+'11.5.3-beta2', profiles.RESOURCE_CAPTURE_PROFILE, key)
+        for key in (None, 'mask/circle', 'filter/black-white-texture'):
+            with self.subTest(key=key),self.assertRaises(ValueError):
+                profiles.validate_resource_profile(
+                    profiles.PROFILE_PREFIX+'11.5.3-beta2', profiles.RESOURCE_CAPTURE_PROFILE, key)
         with self.assertRaises(ValueError):
             profiles.validate_resource_profile(profiles.PROFILE_PREFIX+'11.4.0',profiles.RESOURCE_CAPTURE_PROFILE)
         with self.assertRaises(ValueError):
