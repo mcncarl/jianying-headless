@@ -805,9 +805,12 @@ def from_compiled(compiled, name, out, cached_sounds_as_local=False):
             'tracks': [{'type': 'video', 'name': '口播', 'segments': [
                 {'source': source['source'], 'start_us': r['target_start_us'], 'duration_us': r['target_duration_us'],
                  'source_start_us': r['source_start_us'], 'source_duration_us': r['source_duration_us'],
-                 'speed': source['speed'], 'volume': source['voice_volume']} for r in source['ranges']]},
-                {'type': 'text', 'name': '字幕', 'segments': [{'start_us': s['start_us'], 'duration_us': s['end_us'] - s['start_us'],
-                                                           'text': s['text']} for s in source['subtitles']]}]}
+                 'speed': source['speed'], 'volume': source['voice_volume']} for r in source['ranges']]}]}
+    if source['subtitles']:
+        plan['tracks'].append(
+            {'type': 'text', 'name': '字幕', 'segments': [
+                {'start_us': s['start_us'], 'duration_us': s['end_us'] - s['start_us'], 'text': s['text']}
+                for s in source['subtitles']]})
     adjustments = []
     sound_tracks = []
     for cue in sorted(source['sfx'], key=lambda c: c['start_us']):
