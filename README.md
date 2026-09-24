@@ -158,6 +158,8 @@ Skill 另收录于 [yichen-skills](https://github.com/mcncarl/yichen-skills/tree
 ```bash
 python3 tools/check_package.py
 python3 -m unittest discover -s tests -v
+# 需要官方剪映 11.5.0，且导出前已完全退出：对 7 种输出目录形态各跑一次真实原生导出
+python3 tools/verify_export_paths.py --build /absolute/path/to/verified/build --tag local
 ```
 
 专项原生测试的本机素材与证据不随仓库分发；源码检查不能替代实际工程验收。
