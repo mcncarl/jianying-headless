@@ -136,6 +136,8 @@ Skill 另收录于 [yichen-skills](https://github.com/mcncarl/yichen-skills/tree
 - 工程结构检查、原生播放、视觉一致性、主观听感与素材许可是不同的验收项目。
 
 详细结果及已知问题见 [验证状态](docs/VERIFICATION.md)。
+高频口播剪辑的 Agent 与剪映会员分工见
+[两次真实口播剪辑后的 Token 成本复盘](docs/TOKEN-EFFICIENT-TALKING-HEAD.md)。
 
 ## 项目结构与验证
 
