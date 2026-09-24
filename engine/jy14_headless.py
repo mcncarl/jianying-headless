@@ -28,6 +28,7 @@ import native_effects as effects
 import native_visual_effects as visual_effects
 import native_fonts as fonts
 from runtime_profiles import validate_timeline_schema
+import platform_support as plat
 
 HERE = Path(__file__).resolve().parent
 BLUEPRINT_SHA = '91f7eddad5bff9af23eb88b53713c180e3e3d4054edd469140cfa9aa56bc1dc9'
@@ -36,6 +37,9 @@ MICROS = 1_000_000
 STILL_CAPACITY_US = 10_800_000_000  # Native photo/GIF material capacity, not decoded GIF duration.
 # Literal found in the pinned 11.4 libvideoeditor and confirmed on native save.
 DRAFT_PATH_TOKEN = '##_draftpath_placeholder_0E685133-18CE-45ED-8CB8-2904A212EC80_##/'
+# The encrypted timeline is named draft_info.json on macOS and draft_content.json
+# on Windows for the identical 11.5.0 payload; see engine/platform_support.py.
+TIMELINE_FILE = nd.TIMELINE_FILENAME
 CACHED_SOUNDS = {
     '啵1': {'relative': 'music/5bb4c18515e6059da16432af0db0f1dc.mp3',
            'sha256': '592be87899cdbb7ae5c4665ad9f5847d5a1060106e315b0222786a6131acb9a8', 'size': 5600},
@@ -144,7 +148,7 @@ def probe(path):
 def blueprint():
     require(nd.digest(HERE / 'blueprint.json') == BLUEPRINT_SHA, 'Native blueprint changed; review its provenance')
     result = read_json(HERE / 'blueprint.json')
-    require(result['runtime_manifest'] == nd.MANIFEST_SHA, 'Blueprint differs from its captured provenance')
+    require(result['runtime_manifest'] == plat.CAPTURE_PROVENANCE, 'Blueprint differs from its captured provenance')
     return result
 
 
@@ -360,6 +364,24 @@ def files_manifest(folder):
     return result
 
 
+def apply_platform_identity(timeline, metadata, legacy):
+    """Write the host's own platform identity into a draft blueprint.
+
+    The blueprint carries the macOS identity it was captured from. A draft built
+    on Windows has to say so, otherwise the editor reads a project that claims
+    to come from another platform. macOS returns ``None`` here and is left
+    untouched, so existing output stays byte-identical.
+    """
+    block = plat.platform_block()
+    if block is None:
+        return
+    for carrier in (timeline, metadata, legacy):
+        for key in ('platform', 'last_modified_platform'):
+            existing = carrier.get(key)
+            if isinstance(existing, dict):
+                carrier[key] = dict(existing, **block)
+
+
 def build(plan_path, out):
     runtime = nd.doctor()
     plan = read_json(plan_path)
@@ -389,7 +411,8 @@ def build(plan_path, out):
     fonts.copy_assets(font_assets.values(), folder)
     timeline, reg = timeline_for(plan, assets, target, tid, bp, font_assets)
     metadata = deepcopy(bp['metadata'])
-    metadata.update(draft_id=did, draft_name=target.name, draft_fold_path=str(target), draft_root_path=str(nd.DRAFT_ROOT),
+    metadata.update(draft_id=did, draft_name=target.name, draft_fold_path=plat.draft_path_text(target),
+                    draft_root_path=str(nd.DRAFT_ROOT),
                     tm_draft_create=now, tm_draft_modified=now, tm_duration=duration,
                     draft_materials=[{'type': 0, 'value': [library_record(a, target, now) for a in assets.values()]}] +
                                     [{'type': t, 'value': []} for t in (1, 2, 3, 6, 7, 8)])
@@ -398,14 +421,15 @@ def build(plan_path, out):
                    timelines=[{'id': tid, 'name': '时间线01', 'create_time': now, 'update_time': now, 'is_marked_delete': False}])
     legacy = deepcopy(bp['legacy'])
     legacy.update(id=identifier(), duration=0, tracks=[], materials={}, fps=float(plan['canvas']['fps']))
+    apply_platform_identity(timeline, metadata, legacy)
     timeline_dir = folder / 'Timelines' / tid
     timeline_dir.mkdir(parents=True, mode=0o700)
     h = nd.helper()
-    h._encrypt_metadata_from_memory(nd.packed(timeline), folder / 'draft_info.json')
-    require(h._decrypt_metadata_in_memory(folder / 'draft_info.json') == timeline, 'Timeline codec round-trip failed')
-    cipher = (folder / 'draft_info.json').read_bytes()
-    for dest in (folder / 'template-2.tmp', timeline_dir / 'draft_info.json', timeline_dir / 'template-2.tmp',
-                 folder / 'draft_info.json.bak', timeline_dir / 'draft_info.json.bak'):
+    h._encrypt_metadata_from_memory(nd.packed(timeline), folder / TIMELINE_FILE)
+    require(h._decrypt_metadata_in_memory(folder / TIMELINE_FILE) == timeline, 'Timeline codec round-trip failed')
+    cipher = (folder / TIMELINE_FILE).read_bytes()
+    for dest in (folder / 'template-2.tmp', timeline_dir / TIMELINE_FILE, timeline_dir / 'template-2.tmp',
+                 folder / (TIMELINE_FILE + '.bak'), timeline_dir / (TIMELINE_FILE + '.bak')):
         write(dest, cipher)
     write(folder / 'key_value.json', reg)
     for name in ('project.json', 'project.json.bak'):
@@ -419,8 +443,7 @@ def build(plan_path, out):
                              'import_time_us': 0, 'material_color_tag': '', 'sort_sub_type': 0, 'sort_type': 0,
                              'subdraft_filter_type': 0}]},
         {'type': 1, 'value': [{'child_id': a['local_id'], 'parent_id': ''} for a in assets.values()]}, {'type': 2, 'value': []}]})
-    write(folder / 'draft_settings', ('[General]\ncloud_last_modify_platform=mac\ndraft_create_time=%d\n'
-                                     'draft_last_edit_time=%d\n' % (now // MICROS, now // MICROS)).encode())
+    write(folder / 'draft_settings', plat.editor_settings_block(now // MICROS).encode())
     # Cover generation is local and creates only a JPEG, never an intermediate video.
     videos = [a for a in assets.values() if a['kind'] == 'video']
     if videos:
@@ -438,7 +461,7 @@ def build(plan_path, out):
     write(out / 'plan.json', plan)
     record = {'schema': 'jy14-headless-build/v1', 'name': target.name, 'target': str(target), 'draft_id': did,
               'timeline_id': tid, 'project_id': pid, 'created_us': now, 'duration_us': duration,
-              'blueprint_sha256': BLUEPRINT_SHA, 'runtime_manifest': nd.MANIFEST_SHA,
+              'blueprint_sha256': BLUEPRINT_SHA, 'runtime_manifest': plat.runtime_provenance(),
               'runtime_profile': runtime['runtime_profile'], 'runtime': runtime,
               'assets': list(assets.values()), 'native_resources': native_resources,
               'font_assets': list(font_assets.values()),
@@ -474,7 +497,7 @@ def verify_structure(timeline, metadata, plan, assets, target, allow_native_reso
     validate_timeline_schema(timeline, runtime_profile)
     require(all(timeline['canvas_config'][k] == plan['canvas'][k] for k in ('width', 'height')), 'Canvas changed')
     require(timeline.get('fps', 30) == plan['canvas']['fps'], 'Timeline frame rate changed')
-    require(metadata['draft_fold_path'] == str(target) and metadata['draft_name'] == target.name, 'Draft identity mismatch')
+    require(plat.same_draft_path(metadata['draft_fold_path'], target) and metadata['draft_name'] == target.name, 'Draft identity mismatch')
     require(len(timeline.get('tracks', [])) == len(plan['tracks']), 'Track count changed')
     index = {}
     for bucket, mats in timeline['materials'].items():
@@ -579,14 +602,15 @@ def verify_build(out):
     out = Path(out).resolve(strict=True)
     record = read_json(out / 'build.json')
     require(record['schema'] == 'jy14-headless-build/v1' and record['blueprint_sha256'] == BLUEPRINT_SHA
-            and record['runtime_manifest'] == nd.MANIFEST_SHA, 'Build version or provenance differs')
+            and record['runtime_manifest'] == plat.runtime_provenance(),
+            'Build version or provenance differs')
     require(nd.digest(out / 'plan.json') == record['plan_sha256'], 'Plan changed after build')
     require(files_manifest(out / 'draft') == record['files'], 'Built draft changed')
     plan = read_json(out / 'plan.json')
     target = nd.DRAFT_ROOT / plan['name']
     require(record['target'] == str(target), 'Build target is not the planned direct-child draft')
     h = nd.helper()
-    timeline = h._decrypt_metadata_in_memory(out / 'draft/draft_info.json')
+    timeline = h._decrypt_metadata_in_memory(out / 'draft' / TIMELINE_FILE)
     metadata = h._decrypt_metadata_in_memory(out / 'draft/draft_meta_info.json')
     font_assets = fonts.recorded_assets(record, plan)
     verify_structure(timeline, metadata, plan, record['assets'], target, font_assets=font_assets or ())
@@ -597,47 +621,39 @@ def verify_build(out):
 
 
 def exclusive_rename(src, dst):
-    libc = ctypes.CDLL(None, use_errno=True)
-    fn = libc.renamex_np
-    fn.argtypes, fn.restype = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint], ctypes.c_int
-    if fn(os.fsencode(src), os.fsencode(dst), 0x4):
-        error = ctypes.get_errno()
-        raise OSError(error, os.strerror(error), str(dst))
+    """Place src at dst only when dst does not exist.
+
+    Platform-dispatched: macOS uses renamex_np(RENAME_EXCL), Windows relies on
+    os.rename refusing to replace an existing destination. See
+    engine/platform_support.py.
+    """
+    return plat.EXCLUSIVE_RENAME(src, dst)
 
 
 def index_entry(metadata, target):
     entry = {k: deepcopy(v) for k, v in metadata.items() if k.startswith(('draft_', 'tm_', 'cloud_', 'pippit_'))
              and k not in {'draft_materials', 'draft_materials_copied_info', 'draft_segment_extra_info',
                           'draft_enterprise_info', 'draft_timeline_materials_size_'}}
-    entry.update(draft_cover=str(target / 'draft_cover.jpg'), draft_json_file=str(target / 'draft_info.json'),
+    entry.update(draft_cover=plat.draft_child_text(target, 'draft_cover.jpg'),
+                 draft_json_file=plat.draft_child_text(target, TIMELINE_FILE),
+                 draft_fold_path=plat.draft_path_text(target),
                  draft_timeline_materials_size=metadata['draft_timeline_materials_size_'], streaming_edit_draft_ready=True)
     return entry
 
 
 def read_xattrs(path):
-    names = subprocess.check_output(['/usr/bin/xattr', str(path)], text=True).splitlines()
-    return {name: bytes.fromhex(subprocess.check_output(['/usr/bin/xattr', '-px', name, str(path)], text=True))
-            for name in names}
+    """Platform-dispatched attribute read; Windows reports none."""
+    return plat.READ_XATTRS(path)
 
 
 def copy_xattrs(source_attrs, destination, audit):
-    """Preserve all user/security attributes; record the OS-owned per-file provenance separately."""
-    write(audit / 'index-xattrs-before.json', {k: v.hex() for k, v in source_attrs.items()})
-    for key, value in source_attrs.items():
-        subprocess.run(['/usr/bin/xattr', '-wx', key, value.hex(), str(destination)], check=True, capture_output=True)
-    copied = read_xattrs(destination)
-    write(audit / 'index-xattrs-staged.json', {k: v.hex() for k, v in copied.items()})
-    # A bounded copy experiment on this Mac showed xattr -w returns success but the
-    # OS assigns a different provenance value to the new inode. Never strip it,
-    # quarantine, or any other attribute to force an equality result.
-    changed = sorted(k for k in set(source_attrs) | set(copied) if source_attrs.get(k) != copied.get(k))
-    require(not set(changed) - {'com.apple.provenance'},
-            'Extended attributes could not be preserved before commit: ' + ', '.join(changed)
-            + '. No security attribute was stripped. If com.apple.macl differs, this environment '
-              'needs a reviewed permission-preservation adapter; do not disable SIP or TCC.')
-    require(('com.apple.provenance' in source_attrs) == ('com.apple.provenance' in copied),
-            'OS provenance attribute disappeared or unexpectedly appeared')
-    return copied, changed
+    """Platform-dispatched attribute preservation.
+
+    macOS copies and verifies every attribute, including the OS-owned
+    provenance value. Windows records an empty set: the editor does not keep
+    draft state in NTFS alternate data streams. See engine/platform_support.py.
+    """
+    return plat.COPY_XATTRS(source_attrs, destination, audit, write)
 
 
 def publish(out, audit, resume=False, verify_build_fn=None, verify_live_fn=None):
@@ -663,12 +679,14 @@ def publish(out, audit, resume=False, verify_build_fn=None, verify_live_fn=None)
     try:
         root = h._snapshot_file(nd.DRAFT_ROOT / 'root_meta_info.json', 'home index')
         original = h._parse_strict_json(root.content, 'home index')
-        require(original['root_path'] == str(nd.DRAFT_ROOT), 'Home index root path mismatch')
-        entries = [e for e in original['all_draft_store'] if e.get('draft_fold_path') == str(target)
+        require(plat.same_draft_path(original['root_path'], nd.DRAFT_ROOT), 'Home index root path mismatch')
+        entries = [e for e in original['all_draft_store']
+                   if plat.same_draft_path(e.get('draft_fold_path'), target)
                    or e.get('draft_id') == record['draft_id']]
         if entries:
             require(resume and len(entries) == 1 and entries[0].get('draft_id') == record['draft_id']
-                    and entries[0].get('draft_fold_path') == str(target), 'Draft registration conflicts')
+                    and plat.same_draft_path(entries[0].get('draft_fold_path'), target),
+                    'Draft registration conflicts')
             phase = 'index_already_registered'
             result = dict(verify_live_fn(out), status='already_registered', index_written=False, audit=str(audit))
             write(audit / 'result.json', result)
@@ -707,7 +725,7 @@ def publish(out, audit, resume=False, verify_build_fn=None, verify_live_fn=None)
                 'Prepared home index or its attributes changed before commit')
         os.replace(temporary, root.path)
         phase = 'index_replaced'
-        os.fsync(lock)
+        plat.SYNC_LOCK(lock)
         after = read_json(root.path)
         require(after == updated and after['all_draft_store'][1:] == original['all_draft_store'], 'Unrelated home entries changed')
         final_xattrs = read_xattrs(root.path)
@@ -744,7 +762,8 @@ def publish(out, audit, resume=False, verify_build_fn=None, verify_live_fn=None)
 def verify_live(out):
     out = Path(out).resolve(strict=True)
     record = read_json(out / 'build.json')
-    require(record.get('runtime_manifest') == nd.MANIFEST_SHA and record.get('blueprint_sha256') == BLUEPRINT_SHA,
+    require(record.get('runtime_manifest') == plat.runtime_provenance()
+            and record.get('blueprint_sha256') == BLUEPRINT_SHA,
             'Build provenance changed')
     plan = read_json(out / 'plan.json')
     require(nd.digest(out / 'plan.json') == record['plan_sha256'], 'Plan changed')
@@ -752,7 +771,7 @@ def verify_live(out):
     target = nd.DRAFT_ROOT / plan['name']
     require(str(target) == record['target'] and target.is_dir() and not target.is_symlink(), 'Invalid target directory')
     h = nd.helper()
-    timeline = h._decrypt_metadata_in_memory(target / 'draft_info.json')
+    timeline = h._decrypt_metadata_in_memory(target / TIMELINE_FILE)
     metadata = h._decrypt_metadata_in_memory(target / 'draft_meta_info.json')
     require(timeline['id'] == record['timeline_id'] and metadata['draft_id'] == record['draft_id'], 'Draft identity changed')
     native_resource_bindings = verify_structure(timeline, metadata, plan, record['assets'], target,
@@ -761,8 +780,8 @@ def verify_live(out):
                                                font_assets=font_assets or ())
     project = read_json(target / 'Timelines/project.json')
     require(project['main_timeline_id'] == timeline['id'], 'Project/timeline reference changed')
-    mirrors = [target / 'draft_info.json', target / 'template-2.tmp',
-               target / 'Timelines' / timeline['id'] / 'draft_info.json',
+    mirrors = [target / TIMELINE_FILE, target / 'template-2.tmp',
+               target / 'Timelines' / timeline['id'] / TIMELINE_FILE,
                target / 'Timelines' / timeline['id'] / 'template-2.tmp']
     require(len({nd.digest(p) for p in mirrors}) == 1 and len({(p.stat().st_dev, p.stat().st_ino) for p in mirrors}) == 4,
             'Four active mirrors must be equal and physically independent')
@@ -772,7 +791,8 @@ def verify_live(out):
     font_files = fonts.verify_assets(font_assets, timeline, target, target) if font_assets is not None else 0
     root = read_json(nd.DRAFT_ROOT / 'root_meta_info.json')
     entries = [e for e in root['all_draft_store'] if e.get('draft_id') == record['draft_id']]
-    require(len(entries) == 1 and entries[0]['draft_fold_path'] == str(target), 'Home registration missing or ambiguous')
+    require(len(entries) == 1 and plat.same_draft_path(entries[0]['draft_fold_path'], target),
+            'Home registration missing or ambiguous')
     return {'status': 'verified', 'draft': str(target), 'name': target.name, 'duration_us': timeline.get('duration', 0),
             'native_timeline_schema': timeline['new_version'],
             'tracks': [{'type': t['type'], 'segments': len(t['segments'])} for t in timeline.get('tracks', [])],

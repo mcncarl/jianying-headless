@@ -14,8 +14,9 @@ ROOT = Path(__file__).resolve().parent.parent
 LOCAL_DIRS = {'.git', 'work', '__pycache__', '.pytest_cache', '.venv'}
 LOCAL_CODEC = 'bridge/jy14_codec_hardened_11_4'
 SUFFIXES = {'.py', '.cpp', '.h', '.json', '.md', '.yaml', '.txt'}
-SPECIAL = {'.gitignore', '.gitattributes', 'NOTICE', 'LICENSE'}
-WORKFLOWS = {'.github/workflows/windows-ffmpeg.yaml'}
+SPECIAL = {'.gitattributes', '.gitignore', 'NOTICE', 'LICENSE'}
+WORKFLOWS = {'.github/workflows/windows-portable.yaml',
+             '.github/workflows/windows-ffmpeg.yaml'}
 # User-approved public IG case derivatives. Never turn this into a general
 # media extension allowance: exact bytes, size and path are release-reviewed.
 PUBLIC_MEDIA = {
@@ -95,9 +96,11 @@ def main():
                     'Workflow must use normal pull_request execution')
             require(re.search(r'(?m)^permissions:\s*\n\s+contents:\s*read\s*$', content),
                     'Workflow permissions must be read-only')
-            require('secrets.' not in content and 'timeout-minutes:' in content
-                    and 'retention-days:' in content,
-                    'Workflow secret, timeout or retention policy is invalid')
+            require('secrets.' not in content and 'timeout-minutes:' in content,
+                    'Workflow secret or timeout policy is invalid')
+            if 'actions/upload-artifact@' in content:
+                require('retention-days:' in content,
+                        'Artifact workflow has no retention policy')
             for action in re.findall(r'(?m)^\s*-?\s*uses:\s*([^\s#]+)', content):
                 require(re.fullmatch(r'[^@]+@[0-9a-f]{40}', action),
                         'Workflow action is not pinned to a reviewed commit: ' + action)
@@ -128,6 +131,21 @@ def main():
         if name == Path(LOCAL_CODEC).name and not (ROOT / LOCAL_CODEC).exists():
             continue
         require(digest(ROOT / 'bridge' / name) == expected, 'Runtime IO/codec pin differs: ' + name)
+    # Windows has no compiled codec helper, so its manifest pins the three
+    # bridge modules instead. Both manifests are committed, so both are checked
+    # from every host.
+    windows_manifest_path = ROOT / 'bridge/SOURCE_MANIFEST-windows.json'
+    require(windows_manifest_path.is_file(), 'Windows bridge manifest is missing')
+    support = ROOT / 'engine/platform_support.py'
+    require(digest(windows_manifest_path) == literal(support, 'WINDOWS_IO_MANIFEST_SHA'),
+            'Windows bridge manifest pin differs')
+    windows_manifest = json.loads(windows_manifest_path.read_bytes())
+    require(windows_manifest.get('schema') == 'jianying-headless-bridge-source-windows/v1',
+            'Unexpected Windows bridge manifest schema')
+    require(windows_manifest.get('source_files'), 'Windows bridge manifest records no sources')
+    for name, expected in windows_manifest['source_files'].items():
+        require(Path(name).name == name and digest(ROOT / 'bridge' / name) == expected,
+                'Windows bridge source pin differs: ' + name)
     require(digest(ROOT / 'engine/native-resource-catalog.json') ==
             literal(ROOT / 'engine/native_resources.py', 'CATALOG_SHA'), 'Resource catalog pin differs')
 

@@ -18,6 +18,9 @@ from runtime_profiles import PROFILES, PRIMARY_VERSION, validate_identity
 
 APP = Path('/Applications/VideoFusion-macOS.app')
 DRAFT_ROOT = Path.home() / 'Movies/JianyingPro/User Data/Projects/com.lveditor.draft'
+# Name of the encrypted per-timeline file. Windows writes draft_content.json
+# for the same 11.5.0 payload; see engine/platform_support.py.
+TIMELINE_FILENAME = 'draft_info.json'
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BACKEND = PROJECT_ROOT / 'bridge'
 # Historical blueprint/codec provenance, not a statement of the current app version.
@@ -112,3 +115,26 @@ def validate_compiled(value):
         sys.path.insert(0, str(scripts))
     from edit_plan import validate_compiled as validate
     return validate(value)
+
+
+# ---------------------------------------------------------------------------
+# Windows override
+#
+# Everything above is the reviewed macOS runtime. On Windows the same surface
+# is supplied by engine/platform_support.py, which owns the per-platform
+# discovery, identity check and IO backend. Rebinding here keeps every caller
+# written against ``headless_runtime`` unchanged.
+# ---------------------------------------------------------------------------
+
+if os.name == 'nt':  # pragma: no cover - exercised on Windows only
+    import platform_support as _platform
+
+    DRAFT_ROOT = _platform.DRAFT_ROOT
+    MANIFEST_SHA = _platform.manifest_sha()
+    # Keep imports usable for offline tests on a clean Windows runner. Live
+    # operations call doctor(), which resolves and verifies the installed
+    # profile before a draft is created or written.
+    TIMELINE_FILENAME = _platform.TIMELINE_FILENAME
+    doctor = _platform.doctor
+    validate_runtime = _platform.validate_runtime
+    helper = _platform.helper

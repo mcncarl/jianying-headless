@@ -1,0 +1,34 @@
+{
+  "schema": "co-install-manifest/v1",
+  "description": "How the yichen-jianying-edit Skill shell is paired with a Jianying Headless checkout on Windows.",
+  "skill": {
+    "name": "yichen-jianying-edit",
+    "installed_path": "<HOST_SKILLS_DIR>/yichen-jianying-edit",
+    "source": "<checked-out-repo>/skills/yichen-jianying-edit",
+    "files": 14,
+    "env_var": "JIANYING_HEADLESS_ROOT",
+    "license": "Personal study and non-commercial use; commercial use requires the author's written permission."
+  },
+  "engine": {
+    "repo": "masfrank/jianying-headless",
+    "branch": "windows-support",
+    "checkout": "<absolute path to the cloned repository>"
+  },
+  "platforms": {
+    "windows": {
+      "usable": true,
+      "entrypoint_pins": 16,
+      "note": "Pins include platform_support.py, runtime_profiles.py and native_fonts.py; all 16 match a Windows checkout."
+    },
+    "macos": {
+      "usable": false,
+      "note": "The upstream Skill pins a macOS runtime profile and a different 13-component set, so it is not a Windows substitute."
+    }
+  },
+  "install_steps": [
+    "Clone the windows-support branch and set core.autocrlf=false, otherwise every sha256 pin fails.",
+    "Copy the whole skills/yichen-jianying-edit directory into the host Skill directory; copying SKILL.md alone is not enough.",
+    "Export JIANYING_HEADLESS_ROOT to the absolute checkout path when the Skill lives outside the repository.",
+    "Run the doctor command and require status=ok before any native operation."
+  ]
+}

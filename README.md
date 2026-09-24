@@ -1,13 +1,16 @@
 # Jianying Headless
 
-面向剪映专业版 macOS 的本地自动化工具。通过结构化剪辑计划生成可编辑草稿，
-在独立副本中修改多轨工程，并调用本机剪映引擎导出 MP4。
+面向剪映专业版的本地自动化工具，支持 macOS 与 Windows。通过结构化剪辑计划生成可编辑草稿，
+在独立副本中修改多轨工程；macOS 还可调用本机剪映引擎导出 MP4。
 
 **主要适配版本：11.5.0 · 兼容版本：11.4.2**
 
 **首次使用请从 [从零生成第一个剪映草稿](docs/GETTING-STARTED.md) 开始。**
 教程包含安装前提、环境检查、拖入自己的视频、首页登记、保存重开和常见报错处理。
 11.5.0 仍需匹配具体安装身份与工具链，尚不保证任意电脑安装即用。
+
+Windows 的能力范围、差异与验证记录见 [Windows 支持](docs/WINDOWS.md)：
+草稿生成与首页登记可用，原生导出与原生效果资源仍只在 macOS 可用。
 
 项目适用于 AI 视频工作流的工程交接、批量草稿生成和 Agent 辅助剪辑。
 提供 Python 命令行入口及配套 Agent Skill。它不是剪映官方 SDK，运行时需要安装匹配版本的剪映。
@@ -33,6 +36,7 @@
 Windows 另提供独立的 FFmpeg 路径：从剪辑计划生成已校验的渲染快照，
 再输出 MP4。它**不需要安装剪映，也不生成可在剪映中编辑的草稿**；
 只支持已说明的视频、音频和基础文字能力，不等同于上方的 macOS 原生流程。
+在 Windows 使用时，构建、验证和导出均须明确指定 `--backend windows-ffmpeg`。
 Windows 云端使用本仓库公开 IG 案例验证了完整解码、帧数与音量；
 使用方法和限制见 [Windows FFmpeg 导出](docs/windows-ffmpeg.md)。
 
@@ -67,10 +71,20 @@ Windows 云端使用本仓库公开 IG 案例验证了完整解码、帧数与�
 
 ## 运行环境
 
+macOS：
+
 - Apple Silicon Mac，macOS 26.0+；已验证环境为 macOS 26.5.1。
 - 剪映专业版 11.5.0，或兼容配置对应的 11.4.2。
 - Python 3.9+、FFmpeg / ffprobe、Xcode Command Line Tools。
 - 已验证桥接工具链：Apple clang 21.0.0 / macOS SDK 26.5。
+
+Windows：
+
+- 64 位 Windows 10 / 11；已验证环境为 Windows 11（10.0.22631）。
+- 剪映专业版 11.5.0；已验证 build 14471。
+- Python 3.9+、FFmpeg / ffprobe。
+- 不需要 C++ 编译器或构建工具链：加密编解码通过 `ctypes` 直接绑定官方库。
+- 原生导出与原生效果资源不在 Windows 支持范围内。
 
 应用版本、build、官方库哈希、签名与开发者身份均有检查。
 未知版本或不匹配组件会被拒绝，不通过放宽校验强行运行。干净机器安装验收尚未完成。
@@ -84,12 +98,15 @@ Windows 云端使用本仓库公开 IG 案例验证了完整解码、帧数与�
 ```bash
 git clone https://github.com/mcncarl/jianying-headless.git
 cd jianying-headless
-python3 tools/build_native_codec.py
-python3 skills/yichen-jianying-edit/scripts/headless_draft.py doctor
+python3 tools/build_native_codec.py                     # 仅 macOS
+python skills/yichen-jianying-edit/scripts/headless_draft.py doctor
 ```
 
 `doctor` 是**环境检查命令**：检查剪映版本、组件身份和必要工具。
 检查通过表示环境符合运行条件，不代表任意草稿都已通过画面、声音或导出验收。
+
+Windows 不需要 `build_native_codec.py`：编码桥接直接在进程内绑定官方库，
+改用 `python tools/runtime_report_windows.py --verify-codec --write-manifest` 核对。
 
 桥接构建只编译项目源码并链接本机已安装程序库，不下载剪映、不修改官方库或账号权益。
 编译结果必须匹配固定哈希，否则停止。
@@ -149,16 +166,18 @@ Skill 另收录于 [yichen-skills](https://github.com/mcncarl/yichen-skills/tree
 
 | 目录 | 内容 |
 | --- | --- |
-| `engine/` | 草稿构建、独立副本编辑、资源校验与原生导出 |
+| `engine/` | 草稿构建、独立副本编辑、资源校验与原生导出；`platform_support.py` 为唯一平台分派点 |
 | `bridge/` | 文件与管道桥接源码、保留来源声明的接口头文件 |
 | `skills/` | Agent Skill 及配套参考 |
 | `tools/`、`tests/` | 构建、源码包装检查与可移植测试 |
 | `licenses/` | 第三方许可证 |
 
 ```bash
-python3 tools/check_package.py
-python3 -m unittest discover -s tests -v
+python tools/check_package.py                 # 两个平台通用
+python -m unittest discover -s tests -v       # 两个平台通用
 ```
+
+Windows 的完整验证记录、差异说明与复现命令见 [Windows 支持](docs/WINDOWS.md)。
 
 专项原生测试的本机素材与证据不随仓库分发；源码检查不能替代实际工程验收。
 

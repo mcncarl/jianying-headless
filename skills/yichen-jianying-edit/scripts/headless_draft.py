@@ -33,8 +33,9 @@ PROJECT_ROOT = project_root()
 BACKEND = PROJECT_ROOT / 'engine'
 PINS = {
     'native_fonts.py': 'ddd7b4c1ecd55890bd645c14930f2c5f6687794691c2280daa32673e048da5e6',
-    'runtime_profiles.py': 'f285ddf16d5ad381a9165becc443dd11352663bdb28a1b5d7eccd31b2cd6209e',
-    'jy14_headless.py': '3240e4d6124a7e313e1a7ceb2542752378caefeea8f3349576b84cc9da33ecb9',
+    'runtime_profiles.py': '167a04aed44e8801016ffd9f71cb7ac45795ab40b5799c8d99909af56cc93b1e',
+    'jy14_headless.py': '8b9b0c71f11699257ef8c3588562513c2fc359583f05223ac25443dae7b75259',
+    'platform_support.py': '4a73e9a660194eb39b2be829e92a023889bf3a87dff4bde763b200198116851e',
     'native_motion.py': '5d743caaa38c921779166e5663d36f72a0c3fdb130a690ac3942a7adcf62d6c2',
     'native_effects.py': 'c46b2fc9221dd613f220564b752e532f8f3753dd5595aaffc24f41d5236e4e97',
     'native_resources.py': '9bddfbb1cd688cebd69ac49f9bbf63c242522d9666a2ef7b412fe097113f68f2',
@@ -45,7 +46,7 @@ PINS = {
     'native_edit.py': '151d2adaa582a6a45dcc9ef7606c1e68ef43110602b264fba7d8fcef2235b36e',
     'native_export.py': '10191828c86c12396c77be5ac7a39ee712c4b5f1ac341a09f73418eac5d7202d',
     'native_export.cpp': 'c60da6c65f5bb7ac733b8f5b619401be3921f9254b953a55903d4e7566156379',
-    'headless_runtime.py': '81d75135473eb531688099b45a5a2acf922b4c385a8feaf39f0c92963b46ccca',
+    'headless_runtime.py': 'a2485dcbc3476a42ab2f254fa5024e0589c241b8fb12705d44a1b24515e2783b',
     'blueprint.json': '91f7eddad5bff9af23eb88b53713c180e3e3d4054edd469140cfa9aa56bc1dc9',
     'windows_portable.py': '707e5f1040ad59384f864e5e2ad41ff2c93853be8c7bd562d44f6fb632d244ca',
     'windows_export.py': 'b4f20ce94b6ca0a72d5c542bc56ce9fd23a13a09826ba71a34beb99e23474fc8',
@@ -61,27 +62,30 @@ for name, expected in PINS.items():
 sys.path.insert(0, str(BACKEND))
 entrypoint = 'jy14_headless.py'
 command = sys.argv[1] if len(sys.argv) > 1 else None
+requested = None
+if '--backend' in sys.argv:
+    index = sys.argv.index('--backend')
+    if index + 1 >= len(sys.argv):
+        raise SystemExit('--backend needs a value')
+    requested = sys.argv[index + 1]
+    del sys.argv[index:index + 2]
+if requested not in {None, 'native', 'windows-ffmpeg'}:
+    raise SystemExit('Unsupported backend: ' + requested)
 if command == 'edit':
-    if os.name == 'nt':
+    if os.name == 'nt' or requested == 'windows-ffmpeg':
         raise SystemExit('Native Jianying draft editing is macOS-only')
     entrypoint = 'native_edit.py'
     del sys.argv[1]
 elif command == 'export':
-    requested = None
-    if '--backend' in sys.argv:
-        index = sys.argv.index('--backend')
-        if index + 1 >= len(sys.argv):
-            raise SystemExit('--backend needs a value')
-        requested = sys.argv[index + 1]
-        del sys.argv[index:index + 2]
-    if requested not in {None, 'native', 'windows-ffmpeg'}:
-        raise SystemExit('Unsupported export backend: ' + requested)
-    entrypoint = ('windows_export.py'
-                  if requested == 'windows-ffmpeg' or (requested is None and os.name == 'nt')
-                  else 'native_export.py')
+    if os.name == 'nt' and requested != 'windows-ffmpeg':
+        raise SystemExit('Windows native MP4 export is unavailable; use --backend windows-ffmpeg with a portable build')
+    entrypoint = 'windows_export.py' if requested == 'windows-ffmpeg' else 'native_export.py'
     del sys.argv[1]
 elif os.name == 'nt':
-    if command not in {None, '--help', '-h', 'doctor', 'build', 'verify-build'}:
-        raise SystemExit('This command requires the macOS native backend: ' + str(command))
-    entrypoint = 'windows_portable.py'
+    if requested == 'windows-ffmpeg':
+        if command not in {'doctor', 'build', 'verify-build'}:
+            raise SystemExit('Windows FFmpeg supports only doctor, build and verify-build before export')
+        entrypoint = 'windows_portable.py'
+elif requested == 'windows-ffmpeg':
+    raise SystemExit('Use --backend windows-ffmpeg only for export on macOS')
 runpy.run_path(str(BACKEND / entrypoint), run_name='__main__')

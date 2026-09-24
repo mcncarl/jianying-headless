@@ -43,12 +43,12 @@ class VisualEffectTests(unittest.TestCase):
         spec = {'name': 'light-shake', 'duration_us': 2000000, 'params': {'range': .25, 'speed': .5}}
         segment, node = visual.overlay_segment('effect', spec, target, 1)
         index = {node['id']: ('video_effects', node)}
-        bindings = visual.verify(segment, index, spec, 'effect', target, lambda value, _: Path(value))
+        bindings = visual.verify(segment, index, spec, 'effect', target, lambda value, _: Path(value).resolve())
         self.assertEqual(bindings, [{'key': 'effect/light-shake', 'location': 'draft-owned'}])
         self.assertNotIn('source_timerange', segment)
         node['adjust_params'][0]['value'] = .9
         with self.assertRaisesRegex(ValueError, 'parameter changed'):
-            visual.verify(segment, index, spec, 'effect', target, lambda value, _: Path(value))
+            visual.verify(segment, index, spec, 'effect', target, lambda value, _: Path(value).resolve())
 
     def test_light_shake_export_retains_usage_warning(self):
         node = deepcopy(resources.definition('effect/light-shake')['material'])

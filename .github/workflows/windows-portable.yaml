@@ -1,0 +1,29 @@
+name: Windows portable checks
+
+on:
+  pull_request:
+  push:
+    branches: [windows-support]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable:
+    name: Offline Windows checks (no JianYing installation)
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+      - name: Validate source package and fixed hashes
+        run: python tools/check_package.py
+      - name: Run portable regression suite
+        run: python -m unittest discover -s tests -v
+      - name: Run portable visual-effect tests
+        run: python -m unittest discover -s engine -p test_native_visual_effects.py -v

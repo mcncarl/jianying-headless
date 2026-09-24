@@ -4,6 +4,7 @@ import importlib.util
 import json
 import contextlib
 import io
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -27,10 +28,21 @@ class FirstDraftTests(unittest.TestCase):
             'pix_fmt': 'yuv420p', 'width': 1080, 'height': 1920, 'duration': '6.033333'}]}
 
     def test_drag_paths_and_literal_spaces(self):
+        # A path containing a space and a literal quote is accepted verbatim.
         self.assertEqual(start.parse_source(str(self.source)), self.source)
-        self.assertEqual(start.parse_source(start.shlex.quote(str(self.source))), self.source)
-        escaped = str(self.source).replace(' ', '\\ ').replace("'", "\\'")
-        self.assertEqual(start.parse_source(escaped), self.source)
+
+    def test_dragged_path_quoting_matches_the_host_shell(self):
+        if os.name == 'nt':
+            # Explorer hands over a double-quoted path; a backslash there is a
+            # separator, so it must survive unquoting unchanged.
+            forms = ('"%s"' % self.source,)
+        else:
+            # Finder either wraps in single quotes or escapes with backslashes.
+            forms = (start.shlex.quote(str(self.source)),
+                     str(self.source).replace(' ', '\\ ').replace("'", "\\'"))
+        for form in forms:
+            with self.subTest(form=form):
+                self.assertEqual(start.parse_source(form), self.source)
 
     def test_shell_syntax_is_not_executed(self):
         with self.assertRaises((ValueError, OSError)):
@@ -80,11 +92,12 @@ class FirstDraftTests(unittest.TestCase):
         self.assertEqual(len(jobs), 2)
         self.assertTrue(all('publish' not in c and 'export' not in c and 'create' not in c for c in calls))
         for job in jobs:
-            result = json.loads((job / 'next-steps.json').read_text())
+            result = json.loads((job / 'next-steps.json').read_text(encoding='utf-8'))
             self.assertFalse(result['draft_registered'])
             self.assertFalse(result['video_exported'])
             self.assertEqual(start.shlex.split(result['commands']['publish'])[2], 'publish')
-            self.assertIn(result['commands']['export'], (job / 'next-steps.md').read_text())
+            self.assertIn(result['commands']['export'],
+                          (job / 'next-steps.md').read_text(encoding='utf-8'))
         self.assertEqual(self.source.read_bytes(), b'unit test bytes')
 
 

@@ -1,0 +1,22 @@
+{
+  "schema": "jianying-headless-bridge-source-windows/v1",
+  "platform": "windows",
+  "trust_anchor": "engine-library-sha256",
+  "installed_engine_library": "videoeditor.dll",
+  "reviewed_installation": {
+    "11.5.0.14471": "37cadef37daff82e2ecdcd65080b9cbd7f6f9436f5e56c1ffb90c52c408eb7fb"
+  },
+  "reviewed_timeline_filename": "draft_content.json",
+  "codec_symbols": {
+    "enable": "?enable@EncryptUtils@lvve@@QEAAX_N@Z",
+    "isEnable": "?isEnable@EncryptUtils@lvve@@QEAA_NXZ",
+    "encrypt": "?encrypt@EncryptUtils@lvve@@QEAA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEBV34@@Z",
+    "decrypt": "?decrypt@EncryptUtils@lvve@@QEAA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEBV34@0AEA_N@Z"
+  },
+  "official_library_distributed": false,
+  "source_files": {
+    "windows_codec.py": "89d1328a08c98107ae24d11efe576497395f07f3d93b9bcd17d9b381c5d45274",
+    "windows_platform.py": "898691df6449ab78f565628084a61a62fd9654f889508eb7aef06820d545f38a",
+    "runtime_io_windows.py": "5cae1e31de8ffa6bdfc3a08d6f8a10bc3e132b555244eb931d566f5b4baf12a6"
+  }
+}
