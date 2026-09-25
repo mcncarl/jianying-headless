@@ -6,7 +6,7 @@ import subprocess
 
 # Independently read from the reviewed binary's LC_BUILD_VERSION and local ld.
 # Compiler and SDK identities remain in the source manifest.
-REVIEWED_LINKER = '1267'
+DEFAULT_REVIEWED_LINKER = '1267'
 
 
 def run(command, env):
@@ -53,8 +53,9 @@ def inspect(developer_dir, reproduction):
                 'sdk_path': sdk_path, 'sdk_version': sdk_version, 'linker': linker,
                 'deployment_target': reproduction['binary_minimum_macos']}
     normalized_compiler = compiler.replace('Apple clang version ', 'Apple clang ', 1)
+    expected_linker = reproduction.get('linker', DEFAULT_REVIEWED_LINKER)
     if (normalized_compiler != reproduction['compiler'] or sdk_version != reproduction['macos_sdk']
-            or linker != REVIEWED_LINKER or not Path(sdk_path).is_dir()):
+            or linker != expected_linker or not Path(sdk_path).is_dir()):
         raise ValueError('Not the reviewed toolchain: ' + json.dumps(identity, ensure_ascii=False))
     return env, identity
 
@@ -66,8 +67,9 @@ def select_toolchain(reproduction, explicit=None):
             return inspect(path, reproduction)
         except (OSError, ValueError, KeyError, IndexError, subprocess.SubprocessError) as error:
             failures.append(str(path) + ': ' + str(error))
+    expected_linker = reproduction.get('linker', DEFAULT_REVIEWED_LINKER)
     raise ValueError('No exact reviewed toolchain found. Required: ' + reproduction['compiler']
-                     + ', SDK ' + reproduction['macos_sdk'] + ', linker ' + REVIEWED_LINKER
+                     + ', SDK ' + reproduction['macos_sdk'] + ', linker ' + expected_linker
                      + '. Install a matching official Xcode/CLT, or select it with --developer-dir. '
                      'No system selection or runtime pin was changed.\n' + '\n'.join(failures))
 
