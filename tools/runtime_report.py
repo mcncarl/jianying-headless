@@ -11,7 +11,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'engine'))
-from runtime_profiles import PROFILES, validate_identity
+from runtime_profiles import identity_for_info, resolve_identity
 
 
 def report(app):
@@ -32,13 +32,19 @@ def report(app):
             for block in iter(lambda: stream.read(1024 * 1024), b''):
                 sha.update(block)
         result['library_sha256'] = sha.hexdigest()
-        result['expected_library_sha256'] = PROFILES.get(result['app_version'])
+        try:
+            expected = identity_for_info(info)
+            result['profile_id'] = expected['profile_id']
+            result['expected_library_sha256'] = expected['library_sha256']
+        except ValueError:
+            result['profile_id'] = None
+            result['expected_library_sha256'] = None
     except (OSError, ValueError) as error:
         result.update(status='unavailable', reason=type(error).__name__,
                       next_step='Check the official Jianying installation; no personal paths are included.')
         return result
     try:
-        validate_identity(info, result['library_sha256'])
+        resolve_identity(info, result['library_sha256'])
         result['identity_matched'] = True
     except ValueError:
         result['identity_matched'] = False

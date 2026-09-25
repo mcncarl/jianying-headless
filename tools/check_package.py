@@ -12,7 +12,8 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
 LOCAL_DIRS = {'.git', 'work', '__pycache__', '.pytest_cache', '.venv'}
-LOCAL_CODEC = 'bridge/jy14_codec_hardened_11_4'
+LOCAL_CODECS = {'bridge/jy14_codec_hardened_11_4',
+                'bridge/jy14_codec_hardened_11_4_b481'}
 SUFFIXES = {'.py', '.cpp', '.h', '.json', '.md', '.yaml', '.txt'}
 SPECIAL = {'.gitignore', '.gitattributes', 'NOTICE', 'LICENSE'}
 WORKFLOWS = {'.github/workflows/windows-ffmpeg.yaml'}
@@ -68,7 +69,7 @@ def source_files():
             relative = path.relative_to(ROOT).as_posix()
             if relative == '.git':  # Git worktrees store metadata in a file.
                 continue
-            if relative == LOCAL_CODEC:
+            if relative in LOCAL_CODECS:
                 continue
             if relative.startswith('.github/'):
                 require(relative in WORKFLOWS, 'Unreviewed GitHub automation: ' + relative)
@@ -125,7 +126,7 @@ def main():
     for name, expected in manifest['source_files'].items():
         require(Path(name).name == name and digest(ROOT / 'bridge' / name) == expected, 'Bridge source pin differs: ' + name)
     for name, expected in literal(runtime, 'PINS').items():
-        if name == Path(LOCAL_CODEC).name and not (ROOT / LOCAL_CODEC).exists():
+        if name == 'jy14_codec_hardened_11_4' and not (ROOT / 'bridge' / name).exists():
             continue
         require(digest(ROOT / 'bridge' / name) == expected, 'Runtime IO/codec pin differs: ' + name)
     require(digest(ROOT / 'engine/native-resource-catalog.json') ==

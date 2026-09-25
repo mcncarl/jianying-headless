@@ -22,7 +22,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'engine'))
 sys.path.insert(0, str(ROOT / 'tools'))
-from runtime_profiles import validate_identity
+from runtime_profiles import APPSTORE_1140_PROFILE, CODEC_PROFILES, resolve_identity
 from build_toolchain import select_toolchain
 
 APP = Path('/Applications/VideoFusion-macOS.app')
@@ -51,29 +51,43 @@ def check():
     supported = platform.system() == 'Darwin' and platform.machine() == 'arm64'
     add('PASS' if supported else 'FAIL', '电脑', '需要 Apple Silicon Mac，终端不能在 Rosetta 模式下运行')
     version = platform.mac_ver()[0]
+    try:
+        info = plistlib.loads((APP / 'Contents/Info.plist').read_bytes())
+        identity = resolve_identity(info, digest(APP / 'Contents/Frameworks/libvideoeditor.dylib'))
+        identity_error = None
+    except (OSError, ValueError, KeyError) as error:
+        identity = None
+        identity_error = error
     modern = bool(version) and int(version.split('.')[0]) >= 26
-    add('PASS' if modern else 'FAIL', 'macOS', '当前 ' + (version or '非 macOS') + '；要求 26.0 或以上')
+    appstore_15 = (identity is not None and identity['profile_id'] == APPSTORE_1140_PROFILE
+                   and version == '15.6.1')
+    supported_os = appstore_15 if identity and identity['profile_id'] == APPSTORE_1140_PROFILE else modern
+    add('PASS' if supported_os else 'FAIL', 'macOS',
+        '当前 ' + (version or '非 macOS') + '；要求 26.0+，或精确 App Store build 481 配置的 15.6.1')
     add('PASS' if sys.version_info >= (3, 9) else 'FAIL', 'Python', platform.python_version())
     for tool in ('ffmpeg', 'ffprobe'):
         add('PASS' if shutil.which(tool) else 'FAIL', tool,
             '已找到' if shutil.which(tool) else '未找到；安装后重新打开终端')
     if supported:
+        profile = None
         try:
             manifest = json.loads((ROOT / 'bridge/SOURCE_MANIFEST.json').read_text())
-            _, toolchain = select_toolchain(manifest['reproduction_environment'])
+            profile = CODEC_PROFILES[identity['profile_id']] if identity else None
+            _, toolchain = select_toolchain(profile['toolchain'] if profile else manifest['reproduction_environment'])
             add('PASS', '已验工具链', toolchain['compiler'] + ' / SDK ' + toolchain['sdk_version']
                 + ' / linker ' + toolchain['linker'] + '；最终仍须校验编译产物')
         except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
             # An already-verified codec does not need recompilation.
-            add('WARN' if (ROOT / 'bridge/jy14_codec_hardened_11_4').is_file() else 'FAIL',
+            filename = profile['filename'] if profile else 'jy14_codec_hardened_11_4'
+            add('WARN' if (ROOT / 'bridge' / filename).is_file() else 'FAIL',
                 '编译工具', str(error))
-    try:
-        info = plistlib.loads((APP / 'Contents/Info.plist').read_bytes())
-        version = validate_identity(info, digest(APP / 'Contents/Frameworks/libvideoeditor.dylib'))
-        add('PASS', '剪映身份', version + '，程序库指纹匹配；完整签名由桥接构建和正式写入检查')
-    except (OSError, ValueError, KeyError) as error:
-        add('FAIL', '剪映身份', str(error) + '；需要匹配的官方安装，不能修改哈希绕过')
-    codec = ROOT / 'bridge/jy14_codec_hardened_11_4'
+    if identity:
+        add('PASS', '剪映身份', identity['app_version'] + ' / build ' + identity['app_build']
+            + '，程序库指纹匹配；完整签名由桥接构建和正式写入检查')
+    else:
+        add('FAIL', '剪映身份', str(identity_error) + '；需要匹配的官方安装，不能修改哈希绕过')
+    codec_filename = CODEC_PROFILES[identity['profile_id']]['filename'] if identity else 'jy14_codec_hardened_11_4'
+    codec = ROOT / 'bridge' / codec_filename
     if not codec.exists():
         add('WARN', '桥接组件', '首次下载尚未构建；下一步运行 python3 tools/build_native_codec.py')
     else:
