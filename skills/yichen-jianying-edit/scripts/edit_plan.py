@@ -98,8 +98,13 @@ def compile_plan(raw):
         raise ValueError('A subtitle or cue endpoint is inside deleted source: %s' % t)
 
     total = round(frame_cursor * 1e6 / fps)
+    subtitle_input = raw.get('subtitles')
+    if subtitle_input is False:
+        subtitle_input = []
+    elif not isinstance(subtitle_input, list):
+        raise ValueError('Subtitles must be a list or false.')
     subtitles = []
-    for cue in raw['subtitles']:
+    for cue in subtitle_input:
         text = cue['text'].strip()
         if not text or '\x00' in text:
             raise ValueError('Subtitles require non-empty text.')
@@ -108,8 +113,6 @@ def compile_plan(raw):
         if end <= start or (subtitles and start < subtitles[-1]['start_us']):
             raise ValueError('Subtitle order or duration is invalid.')
         subtitles.append({'start_us': start, 'end_us': end, 'text': text})
-    if not subtitles:
-        raise ValueError('This speech-edit workflow requires a subtitle track.')
     for a, b in zip(subtitles, subtitles[1:]):
         a['end_us'] = min(a['end_us'], b['start_us'])
         if a['end_us'] <= a['start_us']:
@@ -144,8 +147,10 @@ def validate_compiled(plan):
     volume = number(plan['voice_volume'], 'compiled voice volume')
     if not 0.1 <= speed <= 8 or plan['fps'] not in {24, 25, 30, 50, 60} or not 0 <= volume <= 4:
         raise ValueError('Compiled speed, volume, or frame rate is invalid.')
-    if plan.get('bgm') is not False or not plan['ranges'] or not plan['subtitles']:
-        raise ValueError('Compiled plan must contain speech and subtitles with no automatic BGM.')
+    if plan.get('bgm') is not False or not plan['ranges']:
+        raise ValueError('Compiled plan must contain speech with no automatic BGM.')
+    if not isinstance(plan.get('subtitles'), list):
+        raise ValueError('Compiled subtitles must be a list, which may be empty.')
     cursor = 0
     source_end = -1
     frames = 0
@@ -199,11 +204,12 @@ def write_compiled(plan, out):
     out = Path(out).resolve()
     out.mkdir(parents=True, mode=0o700, exist_ok=False)
     (out / 'compiled.json').write_text(json.dumps(plan, ensure_ascii=False, indent=2))
-    (out / 'subtitles.srt').write_text('\n\n'.join(
-        '%d\n%s --> %s\n%s' % (i + 1, timecode(s['start_us']), timecode(s['end_us']), s['text'])
-        for i, s in enumerate(plan['subtitles'])) + '\n')
-    (out / 'transcript.md').write_text('# 剪后转写稿\n\n' + '\n\n'.join(
-        '[%s] %s' % (timecode(s['start_us']), s['text']) for s in plan['subtitles']) + '\n')
+    if plan['subtitles']:
+        (out / 'subtitles.srt').write_text('\n\n'.join(
+            '%d\n%s --> %s\n%s' % (i + 1, timecode(s['start_us']), timecode(s['end_us']), s['text'])
+            for i, s in enumerate(plan['subtitles'])) + '\n')
+        (out / 'transcript.md').write_text('# 剪后转写稿\n\n' + '\n\n'.join(
+            '[%s] %s' % (timecode(s['start_us']), s['text']) for s in plan['subtitles']) + '\n')
 
 
 def tempo_filters(speed):

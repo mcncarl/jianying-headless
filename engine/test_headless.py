@@ -196,6 +196,21 @@ class HeadlessTests(unittest.TestCase):
         self.assertEqual(len(assets), 2)
         self.assertEqual(duration, 2000000)
 
+    def test_compiled_plan_without_subtitles_creates_no_text_track(self):
+        source = self.plan['tracks'][0]['segments'][0]['source']
+        compiled = {'schema': 'jianying-compiled-plan/v1', 'source': source,
+                    'source_sha256': j.nd.digest(source), 'source_duration_us': 8000000,
+                    'fps': 30, 'speed': 1, 'voice_volume': 1, 'duration_us': 2000000, 'frames': 60,
+                    'ranges': [{'source_start_us': 0, 'source_duration_us': 2000000,
+                                'target_start_us': 0, 'target_duration_us': 2000000, 'frames': 60}],
+                    'subtitles': [], 'sfx': [], 'bgm': False}
+        path = WORK / 'compiled-no-subtitles.json'
+        j.write(path, compiled)
+        j.from_compiled(path, 'no-subtitles-test', WORK / 'no-subtitles-plan.json')
+        plan = j.read_json(WORK / 'no-subtitles-plan.json')
+        self.assertEqual([track['type'] for track in plan['tracks']], ['video'])
+        j.validate_plan(plan)
+
     def test_partial_publish_can_resume_without_overwriting(self):
         # Real encryption and IO, but only in this test's isolated synthetic root.
         root = WORK / 'isolated-projects'
