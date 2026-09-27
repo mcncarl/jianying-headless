@@ -1,6 +1,10 @@
 """Reviewed application identities; never infer compatibility from a version prefix."""
 PRIMARY_VERSION = '11.5.0'
 PROFILE_PREFIX = 'jy14-headless-macos-'
+#: Every host that may report a runtime profile. The timeline payload is shared
+#: across them, so schema compatibility is gated on the *version* rather than on
+#: the host prefix. Native export remains macOS-only; see EXPORT_PROFILES.
+RUNTIME_PROFILE_PREFIXES = (PROFILE_PREFIX, 'jy14-headless-win-')
 PROFILES = {
     '11.5.0': '2041482a1aaeffa4d8bd69b836f8cf38807aaad8021bca410d567c59af3bccfa',
     '11.4.2': '632c8ddd09ff4a54f876cd8142eb505055ee26d944199506b230949b7e106bd1',
@@ -11,14 +15,29 @@ RESOURCE_CAPTURE_PROFILE = PROFILE_PREFIX + '11.4.2'
 TIMELINE_SCHEMAS = frozenset((('185.0.0', 360000), ('187.0.0', 360000)))
 
 
+def runtime_profile_version(runtime_profile):
+    """Reviewed editor version behind a runtime profile name, or ``None``.
+
+    A profile is only recognized when both its host prefix and its version are
+    reviewed, so an unknown host or an unreviewed build can never be upgraded
+    into acceptance by string comparison.
+    """
+    if not isinstance(runtime_profile, str):
+        return None
+    for prefix in RUNTIME_PROFILE_PREFIXES:
+        if runtime_profile.startswith(prefix):
+            version = runtime_profile[len(prefix):]
+            return version if version in PROFILES else None
+    return None
+
+
 def validate_timeline_schema(timeline, runtime_profile=None):
     schema = (timeline.get('new_version'), timeline.get('version'))
     if type(schema[1]) is not int or schema not in TIMELINE_SCHEMAS:
         raise ValueError('Unexpected native timeline version')
     if runtime_profile is not None:
-        known = {PROFILE_PREFIX + version for version in PROFILES}
-        if runtime_profile not in known or (schema[0] == '187.0.0' and
-                                           runtime_profile != PROFILE_PREFIX + '11.5.0'):
+        version = runtime_profile_version(runtime_profile)
+        if version is None or (schema[0] == '187.0.0' and version != '11.5.0'):
             raise ValueError('Native timeline schema is incompatible with this runtime profile')
     return schema
 
@@ -29,7 +48,7 @@ def saved_schema_upgrade(expected, actual, runtime_profile):
     after = validate_timeline_schema(actual, runtime_profile)
     if before == after:
         return None
-    if (runtime_profile == PROFILE_PREFIX + '11.5.0' and before == ('185.0.0', 360000)
+    if (runtime_profile_version(runtime_profile) == '11.5.0' and before == ('185.0.0', 360000)
             and after == ('187.0.0', 360000)
             and actual.get('last_modified_platform', {}).get('app_version') == '11.5.0'):
         return {'timeline_id': actual['id'], 'before': before[0], 'after': after[0]}

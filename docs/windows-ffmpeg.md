@@ -16,12 +16,15 @@ JIANYING_FFPROBE environment variables second, and PATH last.
 ## Build, verify and export
 
 ~~~powershell
-python skills\yichen-jianying-edit\scripts\headless_draft.py build --plan D:\input\plan.json --out D:\jianying-headless\work\windows-build
-python skills\yichen-jianying-edit\scripts\headless_draft.py verify-build --build D:\jianying-headless\work\windows-build
+python skills\yichen-jianying-edit\scripts\headless_draft.py doctor --backend windows-ffmpeg
+python skills\yichen-jianying-edit\scripts\headless_draft.py build --backend windows-ffmpeg --plan D:\input\plan.json --out D:\jianying-headless\work\windows-build
+python skills\yichen-jianying-edit\scripts\headless_draft.py verify-build --backend windows-ffmpeg --build D:\jianying-headless\work\windows-build
 python skills\yichen-jianying-edit\scripts\headless_draft.py export --backend windows-ffmpeg --build D:\jianying-headless\work\windows-build --out D:\jianying-headless\work\windows-export --font C:\Windows\Fonts\msyh.ttc
 ~~~
 
-On Windows the Windows backend is the default. The build stores a deterministic
+The FFmpeg backend must be selected explicitly. Without `--backend windows-ffmpeg`,
+the Windows `doctor`/`build`/`verify-build` commands target the native editable-draft
+path, which requires a reviewed Jianying installation. This portable build stores a deterministic
 render timeline and all media below the render directory; build.json binds the
 plan, timeline and every resource by SHA-256. Absolute timeline media paths,
 parent traversal, symlinks, unknown dependencies and post-build changes are

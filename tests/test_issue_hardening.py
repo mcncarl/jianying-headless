@@ -14,9 +14,13 @@ for part in ('engine', 'bridge', 'tools'):
     sys.path.insert(0, str(ROOT / part))
 import build_toolchain as tc
 import runtime_report
-import runtime_io
+import platform_support as platform
 import jy14_headless as j
 import native_edit
+
+# Exercise the IO implementation this host dispatches to; importing runtime_io
+# directly would pull in the macOS-only fcntl-based module.
+runtime_io = platform.RUNTIME_IO
 
 
 class ToolchainTests(unittest.TestCase):
@@ -31,6 +35,8 @@ class ToolchainTests(unittest.TestCase):
                 tc, 'inspect', side_effect=[ValueError('wrong generation'), ({}, {'matched': True})]):
             self.assertEqual(tc.select_toolchain({}), ({}, {'matched': True}))
 
+    @unittest.skipUnless(sys.platform == 'darwin',
+                         'Xcode developer-dir paths are POSIX-absolute by definition')
     def test_explicit_selection_never_falls_back(self):
         self.assertEqual(tc.candidates('/explicit'), [Path('/explicit')])
         with self.assertRaises(ValueError):
@@ -271,6 +277,8 @@ class PublishRecoveryTests(unittest.TestCase):
 
 
 class AttributePolicyTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == 'darwin',
+                         'com.apple.* extended attributes exist only on macOS')
     def test_macl_and_quarantine_changes_remain_blocked(self):
         for name in ('com.apple.macl', 'com.apple.quarantine'):
             with self.subTest(name=name), patch.object(j, 'write'), patch.object(j.subprocess, 'run'), patch.object(j, 'read_xattrs', return_value={name: b'changed'}):

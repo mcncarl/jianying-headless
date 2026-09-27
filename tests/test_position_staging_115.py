@@ -25,7 +25,7 @@ import native_compound as compound
 import native_edit as edit
 import native_export as export
 import native_motion as motion
-import runtime_io
+import platform_support
 
 PROFILE_115 = 'jy14-headless-macos-11.5.0'
 PROFILE_114 = 'jy14-headless-macos-11.4.2'
@@ -64,6 +64,8 @@ def keyframes_by_segment(timeline):
             for item in track.get('segments', [])}
 
 
+@unittest.skipIf(sys.platform == 'win32',
+                 'macOS 11.5 staging fixture uses macOS font and export paths')
 class PositionStaging115Tests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(prefix='position-staging-115-')
@@ -79,7 +81,8 @@ class PositionStaging115Tests(unittest.TestCase):
         # Also opaque: staging tests validate copying, not media decoding.
         (self.source_folder / 'Resources/synthetic.mp4').write_bytes(b'offline synthetic video')
         self.stage_count = 0
-        parser_only = SimpleNamespace(_parse_strict_json=runtime_io._parse_strict_json)
+        parser_only = SimpleNamespace(
+            _parse_strict_json=platform_support.RUNTIME_IO._parse_strict_json)
         helper = patch.object(j.nd, 'helper', return_value=parser_only)
         helper.start()
         self.addCleanup(helper.stop)

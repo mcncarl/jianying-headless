@@ -1,5 +1,55 @@
 # 验证状态
 
+## 2026-09-24：Windows 防护补丁与双后端离线检查（PR 候选）
+
+Windows 分支与主分支同步后，修复引擎选择不一致、未审核 DLL 在诊断时被加载、
+进程枚举出错仍被视为编辑器已关闭，以及原生字符串长度未检查就读取指针的问题。
+新增 7 项可跨平台运行的拒绝边界测试；在 macOS 上运行仓库离线套件 148 项通过，
+源码包检查通过。Windows 云端[原生草稿离线检查](https://github.com/masfrank/jianying-headless/actions/runs/36001292714)
+通过：148 项中 25 项按平台跳过，另 9 项视觉效果测试通过。
+[独立 FFmpeg 路径](https://github.com/masfrank/jianying-headless/actions/runs/36001292798)
+的 9 项测试与公开 IG 案例构建、MP4 完整解码、0.5 音量增益检查也通过。
+两条路径的命令入口已区分，FFmpeg 路径必须显式选择。
+这些云端运行均不包含官方剪映安装，因此只验证可移植逻辑与独立 MP4 导出；
+本补丁尚未完成 Windows 实机界面打开／播放／保存／完全退出／冷重开验收，
+不能据此宣称 Windows 版本已可供普通用户稳定使用。
+
+## 2026-09-20：Windows 11 + 剪映 11.5.0 草稿构建与首页登记
+
+Windows 适配首次验收。环境为 Windows 11（10.0.22631）与剪映专业版 11.5.0 build 14471。
+能力范围、平台差异与复现命令见 [Windows 支持](WINDOWS.md)。
+
+| 检查 | 结果与范围 |
+| --- | --- |
+| 环境检查 | `doctor` 通过：11.5.0 (14471)、`videoeditor.dll` 哈希、桥接清单与 3 个桥接源码哈希、ffmpeg/ffprobe |
+| 加密编解码 | 对真实草稿做解密→加密→解密往返：明文逐字节一致，长度一致，密钥符号可解析 |
+| 新建草稿 | 1920×1080@30fps，4 轨（2 视频轨 / 1 文字轨 / 1 音频轨）、3 个素材、6 秒；结构与来源检查通过 |
+| 结构校验 | 四份镜像一致；素材源文件未被改动（`source_files_unchanged`） |
+| 首页登记 | 草稿出现在首页列表首位；首页索引与草稿目录同步更新；审计目录完整 |
+| 登记确定性 | 同一构建重复登记两次，首页索引 SHA-256 完全相同 |
+| 便携测试 | `tests/` 48 项通过、2 项按平台跳过（Xcode developer-dir 路径语义、`com.apple.*` 扩展属性策略） |
+| 视觉效果模块 | `engine/test_native_visual_effects.py` 9/9 |
+| 合成素材自检 | `tools/smoke_test.py` 通过；不读用户素材、不登记首页 |
+| 源码包检查 | `tools/check_package.py` 通过，85 个文件 |
+| 未做 | 剪映界面内打开/播放/保存/完全退出/冷重开（需人工）；原生 MP4 导出；原生效果资源；本地字体；其他剪映版本；干净机器安装 |
+
+Windows 没有需要编译的 helper，因此信任锚点为官方库哈希加桥接源码哈希：
+`bridge/SOURCE_MANIFEST-windows.json` 固定 `videoeditor.dll` 指纹与三个桥接模块，
+`engine/platform_support.py` 固定该清单自身的哈希。
+macOS 侧行为未改变：`platform_support.py` 在非 Windows 上原样转出既有实现，
+平台分派集中在单一模块，`runtime_profiles.validate_timeline_schema` 的 macOS 分支逻辑保持等价。
+
+```powershell
+python skills/yichen-jianying-edit/scripts/headless_draft.py doctor
+python tools/check_package.py
+python -m unittest discover -s tests -v
+python -m unittest engine.test_native_visual_effects
+python tools/smoke_test.py
+```
+
+`engine/` 下其余专项测试需要作者本机保留的 fixture、capture 或 build 资料，
+不随仓库分发，因此无法在仓库内直接复现；这与平台无关。
+
 ## 2026-09-22：11.5 兼容补交候选与后续诊断
 
 本节记录在 `6f9c563` 上继续验收的本地候选，区别于下文维护环境的历史场次。

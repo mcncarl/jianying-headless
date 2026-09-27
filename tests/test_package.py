@@ -13,10 +13,11 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT / 'engine'), str(ROOT / 'bridge')]
 import native_resources as resources
-if os.name == 'nt':
-    io = None
-else:
-    import runtime_io as io
+import platform_support as platform
+
+# Exercise the IO implementation this host actually dispatches to; importing
+# runtime_io directly would pull in the macOS-only fcntl-based module.
+io = platform.RUNTIME_IO
 
 WORK = ROOT / 'work/package-tests'
 WORK.mkdir(parents=True, exist_ok=True)
@@ -99,7 +100,7 @@ class PackagingTests(unittest.TestCase):
             relocated = resources.catalog()
         for key, entry in relocated['resources'].items():
             prior = original['resources'][key]
-            self.assertTrue(entry['source'].startswith(str(self.folder) + '/'))
+            self.assertTrue(Path(entry['source']).is_relative_to(self.folder))
             for field in ('files', 'tree_sha256', 'usage'):
                 self.assertEqual(entry.get(field), prior.get(field))
 

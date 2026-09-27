@@ -62,8 +62,10 @@ def main():
     entry = ROOT / 'skills/yichen-jianying-edit/scripts/headless_draft.py'
     environment = dict(os.environ, JIANYING_HEADLESS_ROOT=str(ROOT))
     commands = [
-        [sys.executable, str(entry), 'build', '--plan', str(plan_path), '--out', str(build)],
-        [sys.executable, str(entry), 'verify-build', '--build', str(build)],
+        [sys.executable, str(entry), 'build', '--backend', 'windows-ffmpeg',
+         '--plan', str(plan_path), '--out', str(build)],
+        [sys.executable, str(entry), 'verify-build', '--backend', 'windows-ffmpeg',
+         '--build', str(build)],
         [sys.executable, str(entry), 'export', '--backend', 'windows-ffmpeg',
          '--build', str(build), '--out', str(export), '--font', str(font)],
     ]
