@@ -1,0 +1,385 @@
+{
+  "schema": "jianying-public-native-acceptance/v1",
+  "date": "2026-10-02",
+  "tested_code_commit": "71d54ae578f0d06a8b1c772305bff3b870bcc045",
+  "final_head_binding": "最终 PR 回复绑定提交 SHA；报告本身无法包含自身提交哈希",
+  "verification_owner": "贡献者单台机器；维护端尚未复核此安装",
+  "runtime": {
+    "status": "ok",
+    "app_version": "11.4.0",
+    "app_build": "481",
+    "primary_version": "11.5.0",
+    "compatibility_mode": true,
+    "bundle_id": "com.lemon.lvpro",
+    "libvideoeditor_sha256": "aea79715de6097394c2f38153e11565f02a823678801cd1eafe90bcccb20c086",
+    "runtime_profile": "jy14-headless-macos-11.4.0-b481",
+    "codec_filename": "jy14_codec_hardened_11_4_b481",
+    "codec_sha256": "1fe5819a5bd95051d9adecc9d19ad15ff1e62d8529028307035f181a576ec663",
+    "runtime_hashes_verified": true,
+    "network_called": false,
+    "full_signature_check": "required before live creation"
+  },
+  "environment": {
+    "os": "Darwin",
+    "macos": "15.6.1",
+    "architecture": "arm64"
+  },
+  "bridge_rebuild": {
+    "runtime_profile": "jy14-headless-macos-11.4.0-b481",
+    "toolchain": {
+      "developer_dir": "/Library/Developer/CommandLineTools",
+      "compiler": "Apple clang version 17.0.0 (clang-1700.4.4.1)",
+      "sdk_path": "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+      "sdk_version": "26.1",
+      "linker": "1230.1",
+      "deployment_target": "15.0"
+    },
+    "codec_sha256": "1fe5819a5bd95051d9adecc9d19ad15ff1e62d8529028307035f181a576ec663",
+    "expected_codec_sha256": "1fe5819a5bd95051d9adecc9d19ad15ff1e62d8529028307035f181a576ec663",
+    "stderr": "",
+    "network_called": false,
+    "official_library_copied": false,
+    "app_modified": false,
+    "status": "reproduced-and-verified",
+    "repeat_count_this_session": 2
+  },
+  "public_plan_sha256": "099dbc99b5e91eea2f24f4dbd21f2a4b96647bc7b8c0814c30b7ea0ad0c67c1d",
+  "public_materials_sha256": "97d9c9a18dd44f1f3c20b4a92a0e2290bba1adba972a1f044fea1053adc6c2ce",
+  "tested_plan_equal_to_public_after_name_and_path_normalization": true,
+  "audio_source_checks": [
+    {
+      "file": "audio-00.wav",
+      "frames": 352800,
+      "sample_rate": 44100,
+      "channels": 2,
+      "peak": 7565,
+      "rms": 873.337
+    },
+    {
+      "file": "audio-01.wav",
+      "frames": 352800,
+      "sample_rate": 44100,
+      "channels": 2,
+      "peak": 14978,
+      "rms": 490.279
+    },
+    {
+      "file": "audio-02.wav",
+      "frames": 352800,
+      "sample_rate": 44100,
+      "channels": 2,
+      "peak": 5214,
+      "rms": 662.305
+    },
+    {
+      "file": "audio-03.wav",
+      "frames": 352800,
+      "sample_rate": 44100,
+      "channels": 2,
+      "peak": 10271,
+      "rms": 723.252
+    },
+    {
+      "file": "audio-04.wav",
+      "frames": 352800,
+      "sample_rate": 44100,
+      "channels": 2,
+      "peak": 4612,
+      "rms": 772.536
+    },
+    {
+      "file": "audio-05.wav",
+      "frames": 352800,
+      "sample_rate": 44100,
+      "channels": 2,
+      "peak": 1794,
+      "rms": 67.222
+    },
+    {
+      "file": "audio-06.wav",
+      "frames": 352800,
+      "sample_rate": 44100,
+      "channels": 2,
+      "peak": 5970,
+      "rms": 717.392
+    }
+  ],
+  "steps": [
+    {
+      "command": "doctor",
+      "status": "ok"
+    },
+    {
+      "command": "build",
+      "status": "built"
+    },
+    {
+      "command": "verify-build",
+      "status": "verified"
+    },
+    {
+      "command": "publish",
+      "status": "created"
+    },
+    {
+      "command": "native-open-play-edit-save-quit",
+      "status": "已观察完整播放到00:00:50:07、真实画面/画中画/文字/音频电平；文字临时编辑后恢复，视频原生控件可选；保存并退出"
+    },
+    {
+      "command": "verify-after-save",
+      "result": {
+        "status": "verified",
+        "duration_us": 50233333,
+        "native_timeline_schema": "185.0.0",
+        "tracks": [
+          {
+            "type": "video",
+            "segments": 12
+          },
+          {
+            "type": "video",
+            "segments": 4
+          },
+          {
+            "type": "video",
+            "segments": 4
+          },
+          {
+            "type": "video",
+            "segments": 4
+          },
+          {
+            "type": "video",
+            "segments": 4
+          },
+          {
+            "type": "video",
+            "segments": 4
+          },
+          {
+            "type": "video",
+            "segments": 3
+          },
+          {
+            "type": "video",
+            "segments": 3
+          },
+          {
+            "type": "audio",
+            "segments": 7
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 7
+          },
+          {
+            "type": "text",
+            "segments": 7
+          },
+          {
+            "type": "text",
+            "segments": 7
+          }
+        ],
+        "media_files": 39,
+        "native_resources": 0,
+        "font_files": 0,
+        "native_resource_bindings": [],
+        "native_cache_dependency": false,
+        "four_mirrors_equal": true,
+        "source_files_unchanged": true,
+        "native_ui_acceptance": "requires separate open/play/save/cold-reopen evidence",
+        "video_exported": false
+      }
+    },
+    {
+      "command": "cold-reopen-play-save-quit",
+      "status": "从首页冷重开，素材/文字/时间线仍在；从零播放到00:00:50:07，保存退出"
+    },
+    {
+      "command": "verify-after-cold-reopen",
+      "result": {
+        "status": "verified",
+        "duration_us": 50233333,
+        "native_timeline_schema": "185.0.0",
+        "tracks": [
+          {
+            "type": "video",
+            "segments": 12
+          },
+          {
+            "type": "video",
+            "segments": 4
+          },
+          {
+            "type": "video",
+            "segments": 4
+          },
+          {
+            "type": "video",
+            "segments": 4
+          },
+          {
+            "type": "video",
+            "segments": 4
+          },
+          {
+            "type": "video",
+            "segments": 4
+          },
+          {
+            "type": "video",
+            "segments": 3
+          },
+          {
+            "type": "video",
+            "segments": 3
+          },
+          {
+            "type": "audio",
+            "segments": 7
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 8
+          },
+          {
+            "type": "text",
+            "segments": 7
+          },
+          {
+            "type": "text",
+            "segments": 7
+          },
+          {
+            "type": "text",
+            "segments": 7
+          }
+        ],
+        "media_files": 39,
+        "native_resources": 0,
+        "font_files": 0,
+        "native_resource_bindings": [],
+        "native_cache_dependency": false,
+        "four_mirrors_equal": true,
+        "source_files_unchanged": true,
+        "native_ui_acceptance": "requires separate open/play/save/cold-reopen evidence",
+        "video_exported": false
+      }
+    }
+  ],
+  "limitations": [
+    "声音检查为源PCM非静音、音量结构与播放器电平；未完成主观听音质量评价",
+    "不覆盖原IG案例全部字体或效果",
+    "不支持已有草稿无界面编辑或原生MP4导出",
+    "音频面板波形/控件未完成UI复核：自动化滚动接口返回noWindowsAvailable；已有源PCM/结构/播放电平证据"
+  ],
+  "first_attempt_diagnostic": {
+    "status": "rejected-by-existing-verifier",
+    "error": "Speed changed",
+    "cause": "原生保存把未对齐帧的目标时长取整并重新计算速度",
+    "example": {
+      "planned_speed": 0.75,
+      "saved_speed": 0.7535000405600065
+    },
+    "resolution": "仅修正测试计划到整帧，保持原校验门禁"
+  },
+  "unrelated_home_entries": {
+    "before": 7,
+    "after": 8,
+    "original_entries_deep_equal": true,
+    "new_test_entries": 1,
+    "raw_index_distributed": false,
+    "scope": "登记前原始索引中每条既有记录逐字段一致；没有声明已快照全部私人草稿文件"
+  },
+  "regression": {
+    "unittest_count": 158,
+    "unittest_status": "passed",
+    "package_check_status": "source-checks-passed",
+    "official_binaries_in_source_inventory": false
+  }
+}

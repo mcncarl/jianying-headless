@@ -20,6 +20,7 @@ import native_edit as edit
 
 PROFILE = 'jy14-headless-macos-11.5.0'
 LEGACY_PROFILE = 'jy14-headless-macos-11.4.2'
+APPSTORE_PROFILE = 'jy14-headless-macos-11.4.0-b481'
 
 
 def timeline():
@@ -656,6 +657,19 @@ def saved_copy_fixture(expected, actual, profile=PROFILE):
 
 
 class VerifyLiveEntryTests(unittest.TestCase):
+    def test_appstore_build_481_is_rejected_by_every_native_edit_entrypoint(self):
+        calls = (
+            (edit.load_source, ('/unused-source',)),
+            (edit.build, (Path('/unused-plan.json'), Path('/unused-build'))),
+            (edit.verify_build, (Path('/unused-build'),)),
+            (edit.verify_live, (Path('/unused-build'),)),
+        )
+        for function, args in calls:
+            with self.subTest(function=function.__name__), \
+                    patch.object(edit.j.nd, 'doctor', return_value={'runtime_profile': APPSTORE_PROFILE}), \
+                    self.assertRaisesRegex(ValueError, 'Existing-draft editing is unavailable'):
+                function(*args)
+
     def test_new_speed_context_is_rejected_with_or_without_default_omissions(self):
         for shape in ('mode_only', 'flat_curve', 'nonflat_curve'):
             for omitted_owners in ((), (0,), (1,), (0, 1)):
@@ -870,7 +884,7 @@ class SavedMacOsProvenanceTests(unittest.TestCase):
 
     def test_unknown_profile_cannot_allow_os_restamp(self):
         expected, actual = self.upgrade_pair()
-        with self.assertRaisesRegex(ValueError, 'incompatible with this runtime profile'):
+        with self.assertRaisesRegex(ValueError, 'Existing-draft editing is unavailable'):
             self.verify(expected, actual, 'jy14-headless-macos-11.5.1')
 
     def test_source_platform_and_other_last_modified_fields_remain_strict(self):

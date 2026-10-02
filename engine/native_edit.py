@@ -18,7 +18,7 @@ import time
 import jy14_headless as j
 import native_compound as compound
 import native_fonts as fonts
-from runtime_profiles import validate_timeline_schema, saved_schema_upgrade
+from runtime_profiles import EDIT_PROFILES, validate_timeline_schema, saved_schema_upgrade
 
 SCHEMA = 'jy14-edit-plan/v1'
 BUILD_SCHEMA = 'jy14-edit-build/v1'
@@ -78,6 +78,8 @@ def mirrors(folder, timeline_id):
 
 def load_source(value):
     runtime = j.nd.doctor()
+    j.require(runtime['runtime_profile'] in EDIT_PROFILES,
+              'Existing-draft editing is unavailable for this exact runtime profile')
     helper = j.nd.helper()
     helper._ensure_editor_closed(True)
     source = source_directory(value)
@@ -394,6 +396,8 @@ def validate_media_interval(segment, info, original, replacement=False, duplicat
 
 
 def build(plan_path, out):
+    j.require(j.nd.doctor()['runtime_profile'] in EDIT_PROFILES,
+              'Existing-draft editing is unavailable for this exact runtime profile')
     plan = j.read_json(plan_path)
     j.keys(plan, {'schema', 'source', 'name', 'operations'}, 'Edit plan')
     j.require(plan.get('schema') == SCHEMA, 'Unsupported edit plan schema')
@@ -526,6 +530,8 @@ def build(plan_path, out):
 
 
 def verify_build(out):
+    j.require(j.nd.doctor()['runtime_profile'] in EDIT_PROFILES,
+              'Existing-draft editing is unavailable for this exact runtime profile')
     out = Path(out).resolve(strict=True)
     record = j.read_json(out / 'build.json')
     j.require(record['schema'] == BUILD_SCHEMA and record['runtime_manifest'] == j.nd.MANIFEST_SHA, 'Edit build provenance differs')
@@ -819,6 +825,8 @@ def normalize_saved_curve_averages(expected, actual, runtime):
 
 
 def verify_live(out):
+    j.require(j.nd.doctor()['runtime_profile'] in EDIT_PROFILES,
+              'Existing-draft editing is unavailable for this exact runtime profile')
     out = Path(out).resolve(strict=True)
     record = j.read_json(out / 'build.json')
     j.require(record.get('schema') == BUILD_SCHEMA and record.get('runtime_manifest') == j.nd.MANIFEST_SHA, 'Unknown edit build')
@@ -922,6 +930,8 @@ def main():
         else:
             p.add_argument('--report')
     args = parser.parse_args()
+    j.require(j.nd.doctor()['runtime_profile'] in EDIT_PROFILES,
+              'Existing-draft editing is unavailable for this exact runtime profile')
     if args.command == 'inspect':
         result = inspect(args.draft, args.out)
     elif args.command == 'build':

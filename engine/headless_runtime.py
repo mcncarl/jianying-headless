@@ -9,12 +9,14 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import platform
 import plistlib
 import shutil
 import subprocess
 import sys
 from types import SimpleNamespace
-from runtime_profiles import PROFILES, PRIMARY_VERSION, validate_identity
+from runtime_profiles import (APPSTORE_1140_PROFILE, CODEC_PROFILES, PRIMARY_VERSION, PROFILES,
+                              resolve_identity)
 
 APP = Path('/Applications/VideoFusion-macOS.app')
 DRAFT_ROOT = Path.home() / 'Movies/JianyingPro/User Data/Projects/com.lveditor.draft'
@@ -54,23 +56,34 @@ def fresh_directory(path):
 def doctor():
     if digest(BACKEND / 'SOURCE_MANIFEST.json') != IO_MANIFEST_SHA:
         raise ValueError('Packaged IO/codec source manifest changed')
-    for name, expected in PINS.items():
-        path = BACKEND / name
-        if not path.is_file() or path.is_symlink():
-            raise ValueError('IO/codec component unavailable: ' + name + '; build with tools/build_native_codec.py')
-        if digest(path) != expected:
-            raise ValueError('IO/codec component changed: ' + name)
+    io = BACKEND / 'runtime_io.py'
+    if not io.is_file() or io.is_symlink() or digest(io) != PINS['runtime_io.py']:
+        raise ValueError('Packaged IO helper is unavailable or changed')
     info = plistlib.loads((APP / 'Contents/Info.plist').read_bytes())
     library = APP / 'Contents/Frameworks/libvideoeditor.dylib'
     fingerprint = digest(library)
-    version = validate_identity(info, fingerprint)
+    identity = resolve_identity(info, fingerprint)
+    profile_id = identity['profile_id']
+    if profile_id == APPSTORE_1140_PROFILE and (
+            platform.system() != 'Darwin' or platform.machine() != 'arm64'
+            or platform.mac_ver()[0] != '15.6.1'):
+        raise ValueError('The App Store build 481 profile is reviewed only on arm64 macOS 15.6.1')
+    codec_profile = CODEC_PROFILES[profile_id]
+    codec_path = BACKEND / codec_profile['filename']
+    if not codec_path.is_file() or codec_path.is_symlink():
+        raise ValueError('IO/codec component unavailable: ' + codec_profile['filename']
+                         + '; build with tools/build_native_codec.py')
+    if digest(codec_path) != codec_profile['sha256']:
+        raise ValueError('IO/codec component changed: ' + codec_profile['filename'])
     if not all(shutil.which(name) for name in ('ffmpeg', 'ffprobe')):
         raise ValueError('ffmpeg and ffprobe are required')
-    return {'status': 'ok', 'app_version': version, 'app_build': version,
-            'primary_version': PRIMARY_VERSION, 'compatibility_mode': version != PRIMARY_VERSION,
+    return {'status': 'ok', 'app_version': identity['app_version'],
+            'app_build': identity['app_build'], 'primary_version': PRIMARY_VERSION,
+            'compatibility_mode': profile_id != PRIMARY_VERSION,
             'bundle_id': BUNDLE_ID, 'libvideoeditor_sha256': fingerprint,
-            'runtime_profile': 'jy14-headless-macos-' + version,
-            'codec_sha256': PINS['jy14_codec_hardened_11_4'],
+            'runtime_profile': identity['runtime_profile'],
+            'codec_filename': codec_profile['filename'],
+            'codec_sha256': codec_profile['sha256'],
             'runtime_hashes_verified': True, 'network_called': False,
             'full_signature_check': 'required before live creation'}
 
@@ -90,7 +103,7 @@ def validate_runtime():
 
 
 def helper():
-    doctor()
+    runtime = doctor()
     name = '_jy14_headless_pinned_io_' + hashlib.sha256(str(BACKEND).encode()).hexdigest()[:16]
     h = sys.modules.get(name)
     if h is None:
@@ -98,6 +111,8 @@ def helper():
         h = importlib.util.module_from_spec(spec)
         sys.modules[name] = h
         spec.loader.exec_module(h)
+    h.CODEC_PATH = BACKEND / runtime['codec_filename']
+    h.REQUIRED_CODEC_SHA256 = runtime['codec_sha256']
     names = ('_decrypt_metadata_in_memory', '_encrypt_metadata_from_memory',
              '_ensure_editor_closed', '_snapshot_file', '_parse_strict_json',
              '_revalidate_snapshot', '_acquire_directory_transaction_lock',

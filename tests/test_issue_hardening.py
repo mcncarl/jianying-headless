@@ -278,5 +278,64 @@ class AttributePolicyTests(unittest.TestCase):
                     j.copy_xattrs({name: b'original'}, Path('/unused'), Path('/audit'))
 
 
+class AppStoreProvenancePolicyTests(unittest.TestCase):
+    """The macOS 15 App Store exception is intentionally narrower than xattr copying."""
+
+    PROFILE = j.PROFILE_PREFIX + j.APPSTORE_1140_PROFILE
+
+    def copy(self, **changes):
+        work = ROOT / 'work/issue-hardening-tests'
+        work.mkdir(parents=True, exist_ok=True)
+        root = Path(tempfile.mkdtemp(prefix='provenance-', dir=work))
+        draft_root = root / 'draft-root'
+        draft_root.mkdir()
+        parent = changes.pop('parent', draft_root)
+        parent.mkdir(parents=True, exist_ok=True)
+        name = changes.pop('name', '.root_meta_info.headless-test.tmp')
+        destination = parent / name
+        audit = root / 'audit'
+        fresh_value = changes.pop('fresh', b'01234567890')
+        copied_value = changes.pop('copied', b'01234567890')
+        runtime = changes.pop('runtime', self.PROFILE)
+        system = changes.pop('system', 'Darwin')
+        machine = changes.pop('machine', 'arm64')
+        os_version = changes.pop('os_version', '15.6.1')
+        self.assertFalse(changes, 'Unknown provenance fixture changes: ' + repr(changes))
+        copied = {'com.apple.quarantine': b'keep', 'com.apple.provenance': copied_value}
+        reads = ([{'com.apple.provenance': fresh_value}, copied]
+                 if runtime == self.PROFILE else [copied])
+        with patch.object(j.nd, 'DRAFT_ROOT', draft_root), \
+                patch.object(j, 'read_xattrs', side_effect=reads), \
+                patch.object(j.subprocess, 'run'), \
+                patch.object(j.platform, 'system', return_value=system), \
+                patch.object(j.platform, 'machine', return_value=machine), \
+                patch.object(j.platform, 'mac_ver', return_value=(os_version, (), machine)):
+            return j.copy_xattrs({'com.apple.quarantine': b'keep'}, destination, audit, runtime)
+
+    def test_exact_temp_profile_os_and_unchanged_eleven_byte_provenance_is_allowed(self):
+        copied, changed = self.copy()
+
+        self.assertEqual(copied['com.apple.provenance'], b'01234567890')
+        self.assertEqual(changed, ['com.apple.provenance'])
+
+    def test_provenance_addition_rejects_every_unreviewed_condition(self):
+        cases = {
+            'legacy profile': {'runtime': j.PROFILE_PREFIX + '11.4.2'},
+            'wrong system': {'system': 'Linux'},
+            'wrong architecture': {'machine': 'x86_64'},
+            'wrong OS patch': {'os_version': '15.6.0'},
+            'wrong parent': {'parent': ROOT / 'work/issue-hardening-tests/other-root'},
+            'wrong temporary prefix': {'name': 'root_meta_info.headless-test.tmp'},
+            'wrong temporary suffix': {'name': '.root_meta_info.headless-test'},
+            'changed fresh value': {'fresh': b'abcdefghijk'},
+            'changed copied value': {'copied': b'abcdefghijk'},
+            'wrong provenance length': {'copied': b'short'},
+        }
+        for name, changes in cases.items():
+            with self.subTest(case=name), self.assertRaisesRegex(
+                    ValueError, 'Unreviewed OS provenance addition'):
+                self.copy(**changes)
+
+
 if __name__ == '__main__':
     unittest.main()

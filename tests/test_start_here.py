@@ -4,8 +4,10 @@ import importlib.util
 import json
 import contextlib
 import io
+import plistlib
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -14,6 +16,8 @@ ROOT = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location('start_here', ROOT / 'tools/start_here.py')
 start = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(start)
+sys.path.insert(0, str(ROOT / 'engine'))
+import runtime_profiles as profiles
 
 
 class FirstDraftTests(unittest.TestCase):
@@ -25,6 +29,67 @@ class FirstDraftTests(unittest.TestCase):
         self.source.write_bytes(b'unit test bytes')
         self.media = {'streams': [{'codec_type': 'video', 'codec_name': 'h264',
             'pix_fmt': 'yuv420p', 'width': 1080, 'height': 1920, 'duration': '6.033333'}]}
+
+    def run_check(self, info, fingerprint, macos_version):
+        root = Path(tempfile.mkdtemp(prefix='check-', dir=self.folder))
+        app = root / 'VideoFusion-macOS.app' / 'Contents'
+        (app / 'Frameworks').mkdir(parents=True)
+        with (app / 'Info.plist').open('wb') as stream:
+            plistlib.dump(info, stream)
+        (app / 'Frameworks/libvideoeditor.dylib').write_bytes(b'test library')
+        bridge = root / 'bridge'
+        bridge.mkdir()
+        (bridge / 'SOURCE_MANIFEST.json').write_text(
+            json.dumps({'reproduction_environment': {}}, ensure_ascii=False))
+        toolchain = {'compiler': 'Apple clang 17.0.0', 'sdk_version': '26.1',
+                     'linker': '1230.1'}
+        output = io.StringIO()
+        with patch.object(start, 'ROOT', root), patch.object(start, 'APP', app.parent), \
+                patch.object(start, 'digest', return_value=fingerprint), \
+                patch.object(start.platform, 'system', return_value='Darwin'), \
+                patch.object(start.platform, 'machine', return_value='arm64'), \
+                patch.object(start.platform, 'mac_ver', return_value=(macos_version, '', '')), \
+                patch.object(start.shutil, 'which', return_value='/usr/bin/tool'), \
+                patch.object(start, 'select_toolchain', return_value=(None, toolchain)), \
+                contextlib.redirect_stdout(output):
+            result = start.check()
+        return result, output.getvalue()
+
+    def test_check_accepts_exact_appstore_build_481_on_macos_15_6_1(self):
+        profile = profiles.APPSTORE_1140_PROFILE
+        info = {'CFBundleShortVersionString': '11.4.0', 'CFBundleVersion': '481',
+                'CFBundleIdentifier': 'com.lemon.lvpro'}
+        result, output = self.run_check(info, profiles.PROFILES[profile], '15.6.1')
+
+        self.assertEqual(result, 0)
+        self.assertIn('[PASS] macOS', output)
+        self.assertIn('[PASS] 剪映身份：11.4.0 / build 481', output)
+
+    def test_check_rejects_nearby_build_and_old_1140_on_macos_15(self):
+        cases = (
+            ({'CFBundleShortVersionString': '11.4.0', 'CFBundleVersion': '480',
+              'CFBundleIdentifier': 'com.lemon.lvpro'},
+             profiles.PROFILES[profiles.APPSTORE_1140_PROFILE], True),
+            ({'CFBundleShortVersionString': '11.4.0', 'CFBundleVersion': '11.4.0',
+              'CFBundleIdentifier': 'com.lemon.lvpro'}, profiles.PROFILES['11.4.0'], False),
+        )
+        for info, fingerprint, identity_rejected in cases:
+            with self.subTest(info=info):
+                result, output = self.run_check(info, fingerprint, '15.6.1')
+                self.assertNotEqual(result, 0)
+                self.assertIn('[FAIL] macOS', output)
+                self.assertIn('[FAIL] 剪映身份' if identity_rejected else '[PASS] 剪映身份', output)
+
+    def test_check_rejects_exact_build_on_other_macos_15_patch(self):
+        info = {'CFBundleShortVersionString': '11.4.0', 'CFBundleVersion': '481',
+                'CFBundleIdentifier': 'com.lemon.lvpro'}
+        for macos_version in ('15.6.0', '26.1'):
+            with self.subTest(macos_version=macos_version):
+                result, output = self.run_check(
+                    info, profiles.PROFILES[profiles.APPSTORE_1140_PROFILE], macos_version)
+                self.assertNotEqual(result, 0)
+                self.assertIn('[FAIL] macOS', output)
+                self.assertIn('[PASS] 剪映身份', output)
 
     def test_drag_paths_and_literal_spaces(self):
         self.assertEqual(start.parse_source(str(self.source)), self.source)

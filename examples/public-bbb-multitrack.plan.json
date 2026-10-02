@@ -1,0 +1,1831 @@
+{
+  "schema": "jy14-headless-plan/v1",
+  "name": "Public BBB multitrack b481 acceptance",
+  "canvas": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30
+  },
+  "tracks": [
+    {
+      "type": "video",
+      "name": "主画面",
+      "segments": [
+        {
+          "source": "ASSETS/video-00.mp4",
+          "start_us": 0,
+          "duration_us": 4133333,
+          "source_start_us": 0,
+          "source_duration_us": 4133333,
+          "speed": 1,
+          "volume": 0
+        },
+        {
+          "source": "ASSETS/video-01.mp4",
+          "start_us": 4133333,
+          "duration_us": 4133334,
+          "source_start_us": 0,
+          "source_duration_us": 6200001,
+          "speed": 1.5,
+          "volume": 0
+        },
+        {
+          "source": "ASSETS/video-02.mp4",
+          "start_us": 8266667,
+          "duration_us": 4133333,
+          "source_start_us": 0,
+          "source_duration_us": 3100000,
+          "speed": 0.75,
+          "volume": 0
+        },
+        {
+          "source": "ASSETS/video-03.mp4",
+          "start_us": 12400000,
+          "duration_us": 4133333,
+          "source_start_us": 0,
+          "source_duration_us": 8266666,
+          "speed": 2,
+          "volume": 0
+        },
+        {
+          "source": "ASSETS/video-04.mp4",
+          "start_us": 16533333,
+          "duration_us": 4133334,
+          "source_start_us": 0,
+          "source_duration_us": 4133334,
+          "speed": 1,
+          "volume": 0
+        },
+        {
+          "source": "ASSETS/video-05.mp4",
+          "start_us": 20666667,
+          "duration_us": 4133333,
+          "source_start_us": 0,
+          "source_duration_us": 6200000,
+          "speed": 1.5,
+          "volume": 0
+        },
+        {
+          "source": "ASSETS/video-06.mp4",
+          "start_us": 24800000,
+          "duration_us": 4133333,
+          "source_start_us": 0,
+          "source_duration_us": 3100000,
+          "speed": 0.75,
+          "volume": 0
+        },
+        {
+          "source": "ASSETS/video-07.mp4",
+          "start_us": 28933333,
+          "duration_us": 4133334,
+          "source_start_us": 0,
+          "source_duration_us": 8266668,
+          "speed": 2,
+          "volume": 0
+        },
+        {
+          "source": "ASSETS/video-08.mp4",
+          "start_us": 33066667,
+          "duration_us": 4133333,
+          "source_start_us": 0,
+          "source_duration_us": 4133333,
+          "speed": 1,
+          "volume": 0
+        },
+        {
+          "source": "ASSETS/video-09.mp4",
+          "start_us": 37200000,
+          "duration_us": 4133333,
+          "source_start_us": 0,
+          "source_duration_us": 6200000,
+          "speed": 1.5,
+          "volume": 0
+        },
+        {
+          "source": "ASSETS/video-10.mp4",
+          "start_us": 41333333,
+          "duration_us": 4133334,
+          "source_start_us": 0,
+          "source_duration_us": 3100000,
+          "speed": 0.75,
+          "volume": 0
+        },
+        {
+          "source": "ASSETS/video-11.mp4",
+          "start_us": 45466667,
+          "duration_us": 4766666,
+          "source_start_us": 0,
+          "source_duration_us": 4766666,
+          "speed": 1,
+          "volume": 0
+        }
+      ]
+    },
+    {
+      "type": "video",
+      "name": "补充画面 1",
+      "segments": [
+        {
+          "source": "ASSETS/video-12.mp4",
+          "start_us": 2000000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": 0.65
+        },
+        {
+          "source": "ASSETS/video-13.mp4",
+          "start_us": 14000000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": 0.65
+        },
+        {
+          "source": "ASSETS/video-14.mp4",
+          "start_us": 26000000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": 0.65
+        },
+        {
+          "source": "ASSETS/video-15.mp4",
+          "start_us": 38000000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": 0.65
+        }
+      ]
+    },
+    {
+      "type": "video",
+      "name": "补充画面 2",
+      "segments": [
+        {
+          "source": "ASSETS/video-16.mp4",
+          "start_us": 2350000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": 0.65,
+          "y": 0.65
+        },
+        {
+          "source": "ASSETS/video-17.mp4",
+          "start_us": 14350000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": 0.65,
+          "y": 0.65
+        },
+        {
+          "source": "ASSETS/video-18.mp4",
+          "start_us": 26350000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": 0.65,
+          "y": 0.65
+        },
+        {
+          "source": "ASSETS/video-19.mp4",
+          "start_us": 38350000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": 0.65,
+          "y": 0.65
+        }
+      ]
+    },
+    {
+      "type": "video",
+      "name": "补充画面 3",
+      "segments": [
+        {
+          "source": "ASSETS/video-20.mp4",
+          "start_us": 2700000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": 0.29000000000000004
+        },
+        {
+          "source": "ASSETS/video-21.mp4",
+          "start_us": 14700000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": 0.29000000000000004
+        },
+        {
+          "source": "ASSETS/video-22.mp4",
+          "start_us": 26700000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": 0.29000000000000004
+        },
+        {
+          "source": "ASSETS/video-23.mp4",
+          "start_us": 38700000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": 0.29000000000000004
+        }
+      ]
+    },
+    {
+      "type": "video",
+      "name": "补充画面 4",
+      "segments": [
+        {
+          "source": "ASSETS/frame-00.png",
+          "start_us": 3050000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": 0.65,
+          "y": 0.29000000000000004
+        },
+        {
+          "source": "ASSETS/frame-01.png",
+          "start_us": 15050000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": 0.65,
+          "y": 0.29000000000000004
+        },
+        {
+          "source": "ASSETS/frame-02.png",
+          "start_us": 27050000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": 0.65,
+          "y": 0.29000000000000004
+        },
+        {
+          "source": "ASSETS/frame-03.png",
+          "start_us": 39050000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": 0.65,
+          "y": 0.29000000000000004
+        }
+      ]
+    },
+    {
+      "type": "video",
+      "name": "补充画面 5",
+      "segments": [
+        {
+          "source": "ASSETS/frame-04.png",
+          "start_us": 3400000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": -0.06999999999999995
+        },
+        {
+          "source": "ASSETS/frame-05.png",
+          "start_us": 15400000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": -0.06999999999999995
+        },
+        {
+          "source": "ASSETS/frame-06.png",
+          "start_us": 27400000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": -0.06999999999999995
+        },
+        {
+          "source": "ASSETS/frame-07.png",
+          "start_us": 39400000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": -0.06999999999999995
+        }
+      ]
+    },
+    {
+      "type": "video",
+      "name": "补充画面 6",
+      "segments": [
+        {
+          "source": "ASSETS/video-12.mp4",
+          "start_us": 3750000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": 0.65,
+          "y": -0.06999999999999995
+        },
+        {
+          "source": "ASSETS/video-13.mp4",
+          "start_us": 15750000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": 0.65,
+          "y": -0.06999999999999995
+        },
+        {
+          "source": "ASSETS/video-14.mp4",
+          "start_us": 27750000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": 0.65,
+          "y": -0.06999999999999995
+        }
+      ]
+    },
+    {
+      "type": "video",
+      "name": "补充画面 7",
+      "segments": [
+        {
+          "source": "ASSETS/video-15.mp4",
+          "start_us": 4100000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": -0.43000000000000005
+        },
+        {
+          "source": "ASSETS/video-16.mp4",
+          "start_us": 16100000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": -0.43000000000000005
+        },
+        {
+          "source": "ASSETS/video-17.mp4",
+          "start_us": 28100000,
+          "duration_us": 2000000,
+          "source_start_us": 0,
+          "source_duration_us": 2000000,
+          "speed": 1,
+          "volume": 0,
+          "scale": 0.28,
+          "x": -0.65,
+          "y": -0.43000000000000005
+        }
+      ]
+    },
+    {
+      "type": "audio",
+      "name": "影片原声分段",
+      "segments": [
+        {
+          "source": "ASSETS/audio-00.wav",
+          "start_us": 0,
+          "duration_us": 7176190,
+          "source_start_us": 0,
+          "source_duration_us": 7176190,
+          "speed": 1,
+          "volume": 0.7
+        },
+        {
+          "source": "ASSETS/audio-01.wav",
+          "start_us": 7176190,
+          "duration_us": 7176191,
+          "source_start_us": 0,
+          "source_duration_us": 7176191,
+          "speed": 1,
+          "volume": 0.7
+        },
+        {
+          "source": "ASSETS/audio-02.wav",
+          "start_us": 14352381,
+          "duration_us": 7176190,
+          "source_start_us": 0,
+          "source_duration_us": 7176190,
+          "speed": 1,
+          "volume": 0.7
+        },
+        {
+          "source": "ASSETS/audio-03.wav",
+          "start_us": 21528571,
+          "duration_us": 7176191,
+          "source_start_us": 0,
+          "source_duration_us": 7176191,
+          "speed": 1,
+          "volume": 0.7
+        },
+        {
+          "source": "ASSETS/audio-04.wav",
+          "start_us": 28704762,
+          "duration_us": 7176190,
+          "source_start_us": 0,
+          "source_duration_us": 7176190,
+          "speed": 1,
+          "volume": 0.7
+        },
+        {
+          "source": "ASSETS/audio-05.wav",
+          "start_us": 35880952,
+          "duration_us": 7176191,
+          "source_start_us": 0,
+          "source_duration_us": 7176191,
+          "speed": 1,
+          "volume": 0.7
+        },
+        {
+          "source": "ASSETS/audio-06.wav",
+          "start_us": 43057143,
+          "duration_us": 7176190,
+          "source_start_us": 0,
+          "source_duration_us": 7176190,
+          "speed": 1,
+          "volume": 0.7
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 1",
+      "segments": [
+        {
+          "text": "开放影片多轨验收",
+          "start_us": 0,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "开放影片多轨验收",
+          "start_us": 6000000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "开放影片多轨验收",
+          "start_us": 12000000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "开放影片多轨验收",
+          "start_us": 18000000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "开放影片多轨验收",
+          "start_us": 24000000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "开放影片多轨验收",
+          "start_us": 30000000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "开放影片多轨验收",
+          "start_us": 36000000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "开放影片多轨验收",
+          "start_us": 42000000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 2",
+      "segments": [
+        {
+          "text": "轨道 2 · 片段 1",
+          "start_us": 220000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 2 · 片段 2",
+          "start_us": 6220000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 2 · 片段 3",
+          "start_us": 12220000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 2 · 片段 4",
+          "start_us": 18220000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 2 · 片段 5",
+          "start_us": 24220000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 2 · 片段 6",
+          "start_us": 30220000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 2 · 片段 7",
+          "start_us": 36220000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 2 · 片段 8",
+          "start_us": 42220000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 3",
+      "segments": [
+        {
+          "text": "轨道 3 · 片段 1",
+          "start_us": 440000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 3 · 片段 2",
+          "start_us": 6440000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 3 · 片段 3",
+          "start_us": 12440000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 3 · 片段 4",
+          "start_us": 18440000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 3 · 片段 5",
+          "start_us": 24440000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 3 · 片段 6",
+          "start_us": 30440000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 3 · 片段 7",
+          "start_us": 36440000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 3 · 片段 8",
+          "start_us": 42440000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 4",
+      "segments": [
+        {
+          "text": "轨道 4 · 片段 1",
+          "start_us": 660000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 4 · 片段 2",
+          "start_us": 6660000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 4 · 片段 3",
+          "start_us": 12660000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 4 · 片段 4",
+          "start_us": 18660000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 4 · 片段 5",
+          "start_us": 24660000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 4 · 片段 6",
+          "start_us": 30660000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 4 · 片段 7",
+          "start_us": 36660000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 4 · 片段 8",
+          "start_us": 42660000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 5",
+      "segments": [
+        {
+          "text": "轨道 5 · 片段 1",
+          "start_us": 880000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 5 · 片段 2",
+          "start_us": 6880000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 5 · 片段 3",
+          "start_us": 12880000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 5 · 片段 4",
+          "start_us": 18880000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 5 · 片段 5",
+          "start_us": 24880000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 5 · 片段 6",
+          "start_us": 30880000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 5 · 片段 7",
+          "start_us": 36880000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 5 · 片段 8",
+          "start_us": 42880000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 6",
+      "segments": [
+        {
+          "text": "轨道 6 · 片段 1",
+          "start_us": 1100000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 6 · 片段 2",
+          "start_us": 7100000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 6 · 片段 3",
+          "start_us": 13100000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 6 · 片段 4",
+          "start_us": 19100000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 6 · 片段 5",
+          "start_us": 25100000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 6 · 片段 6",
+          "start_us": 31100000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 6 · 片段 7",
+          "start_us": 37100000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 6 · 片段 8",
+          "start_us": 43100000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 7",
+      "segments": [
+        {
+          "text": "轨道 7 · 片段 1",
+          "start_us": 1320000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 7 · 片段 2",
+          "start_us": 7320000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 7 · 片段 3",
+          "start_us": 13320000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 7 · 片段 4",
+          "start_us": 19320000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 7 · 片段 5",
+          "start_us": 25320000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 7 · 片段 6",
+          "start_us": 31320000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 7 · 片段 7",
+          "start_us": 37320000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 7 · 片段 8",
+          "start_us": 43320000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 8",
+      "segments": [
+        {
+          "text": "轨道 8 · 片段 1",
+          "start_us": 1540000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 8 · 片段 2",
+          "start_us": 7540000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 8 · 片段 3",
+          "start_us": 13540000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 8 · 片段 4",
+          "start_us": 19540000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 8 · 片段 5",
+          "start_us": 25540000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 8 · 片段 6",
+          "start_us": 31540000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 8 · 片段 7",
+          "start_us": 37540000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 8 · 片段 8",
+          "start_us": 43540000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 9",
+      "segments": [
+        {
+          "text": "轨道 9 · 片段 1",
+          "start_us": 1760000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 9 · 片段 2",
+          "start_us": 7760000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 9 · 片段 3",
+          "start_us": 13760000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 9 · 片段 4",
+          "start_us": 19760000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 9 · 片段 5",
+          "start_us": 25760000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 9 · 片段 6",
+          "start_us": 31760000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 9 · 片段 7",
+          "start_us": 37760000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 9 · 片段 8",
+          "start_us": 43760000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 10",
+      "segments": [
+        {
+          "text": "轨道 10 · 片段 1",
+          "start_us": 1980000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 10 · 片段 2",
+          "start_us": 7980000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 10 · 片段 3",
+          "start_us": 13980000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 10 · 片段 4",
+          "start_us": 19980000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 10 · 片段 5",
+          "start_us": 25980000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 10 · 片段 6",
+          "start_us": 31980000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 10 · 片段 7",
+          "start_us": 37980000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 10 · 片段 8",
+          "start_us": 43980000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 11",
+      "segments": [
+        {
+          "text": "轨道 11 · 片段 1",
+          "start_us": 2200000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 11 · 片段 2",
+          "start_us": 8200000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 11 · 片段 3",
+          "start_us": 14200000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 11 · 片段 4",
+          "start_us": 20200000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 11 · 片段 5",
+          "start_us": 26200000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 11 · 片段 6",
+          "start_us": 32200000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 11 · 片段 7",
+          "start_us": 38200000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 11 · 片段 8",
+          "start_us": 44200000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 12",
+      "segments": [
+        {
+          "text": "轨道 12 · 片段 1",
+          "start_us": 2420000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 12 · 片段 2",
+          "start_us": 8420000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 12 · 片段 3",
+          "start_us": 14420000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 12 · 片段 4",
+          "start_us": 20420000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 12 · 片段 5",
+          "start_us": 26420000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 12 · 片段 6",
+          "start_us": 32420000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 12 · 片段 7",
+          "start_us": 38420000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 13",
+      "segments": [
+        {
+          "text": "轨道 13 · 片段 1",
+          "start_us": 2640000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 13 · 片段 2",
+          "start_us": 8640000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 13 · 片段 3",
+          "start_us": 14640000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 13 · 片段 4",
+          "start_us": 20640000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 13 · 片段 5",
+          "start_us": 26640000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 13 · 片段 6",
+          "start_us": 32640000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "轨道 13 · 片段 7",
+          "start_us": 38640000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.78,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "可编辑文字 14",
+      "segments": [
+        {
+          "text": "Blender Foundation · CC BY 3.0",
+          "start_us": 2860000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "Blender Foundation · CC BY 3.0",
+          "start_us": 8860000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "Blender Foundation · CC BY 3.0",
+          "start_us": 14860000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "Blender Foundation · CC BY 3.0",
+          "start_us": 20860000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "Blender Foundation · CC BY 3.0",
+          "start_us": 26860000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "Blender Foundation · CC BY 3.0",
+          "start_us": 32860000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        },
+        {
+          "text": "Blender Foundation · CC BY 3.0",
+          "start_us": 38860000,
+          "duration_us": 900000,
+          "size": 4,
+          "x": 0,
+          "y": -0.64,
+          "color": "#FFFFFF",
+          "border_color": "#000000",
+          "border_width": 0.03
+        }
+      ]
+    }
+  ]
+}

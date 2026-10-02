@@ -13,6 +13,7 @@ import json
 import math
 import os
 from pathlib import Path
+import platform
 import re
 import shutil
 import stat
@@ -27,7 +28,7 @@ import native_resources as resources
 import native_effects as effects
 import native_visual_effects as visual_effects
 import native_fonts as fonts
-from runtime_profiles import validate_timeline_schema
+from runtime_profiles import APPSTORE_1140_PROFILE, PROFILE_PREFIX, validate_timeline_schema
 
 HERE = Path(__file__).resolve().parent
 BLUEPRINT_SHA = '91f7eddad5bff9af23eb88b53713c180e3e3d4054edd469140cfa9aa56bc1dc9'
@@ -620,9 +621,13 @@ def read_xattrs(path):
             for name in names}
 
 
-def copy_xattrs(source_attrs, destination, audit):
+def copy_xattrs(source_attrs, destination, audit, runtime_profile=None):
     """Preserve all user/security attributes; record the OS-owned per-file provenance separately."""
     write(audit / 'index-xattrs-before.json', {k: v.hex() for k, v in source_attrs.items()})
+    appstore_15 = runtime_profile == PROFILE_PREFIX + APPSTORE_1140_PROFILE
+    fresh = read_xattrs(destination) if appstore_15 else None
+    if fresh is not None:
+        write(audit / 'index-xattrs-fresh.json', {k: v.hex() for k, v in fresh.items()})
     for key, value in source_attrs.items():
         subprocess.run(['/usr/bin/xattr', '-wx', key, value.hex(), str(destination)], check=True, capture_output=True)
     copied = read_xattrs(destination)
@@ -635,8 +640,21 @@ def copy_xattrs(source_attrs, destination, audit):
             'Extended attributes could not be preserved before commit: ' + ', '.join(changed)
             + '. No security attribute was stripped. If com.apple.macl differs, this environment '
               'needs a reviewed permission-preservation adapter; do not disable SIP or TCC.')
-    require(('com.apple.provenance' in source_attrs) == ('com.apple.provenance' in copied),
-            'OS provenance attribute disappeared or unexpectedly appeared')
+    provenance_added = ('com.apple.provenance' not in source_attrs
+                        and 'com.apple.provenance' in copied)
+    if provenance_added:
+        require(appstore_15 and platform.system() == 'Darwin' and platform.machine() == 'arm64'
+                and platform.mac_ver()[0] == '15.6.1'
+                and Path(destination).parent == nd.DRAFT_ROOT
+                and Path(destination).name.startswith('.root_meta_info.headless-')
+                and Path(destination).name.endswith('.tmp')
+                and fresh is not None
+                and copied['com.apple.provenance'] == fresh.get('com.apple.provenance')
+                and len(copied['com.apple.provenance']) == 11,
+                'Unreviewed OS provenance addition during index staging')
+    else:
+        require(('com.apple.provenance' in source_attrs) == ('com.apple.provenance' in copied),
+                'OS provenance attribute disappeared or unexpectedly appeared')
     return copied, changed
 
 
@@ -685,7 +703,8 @@ def publish(out, audit, resume=False, verify_build_fn=None, verify_live_fn=None)
         temporary = root.path.parent / ('.root_meta_info.headless-' + uuid.uuid4().hex + '.tmp')
         write(temporary, payload)
         os.chmod(temporary, root.mode)
-        staged_xattrs, os_attribute_changes = copy_xattrs(xattrs, temporary, audit)
+        staged_xattrs, os_attribute_changes = copy_xattrs(xattrs, temporary, audit,
+                                                          runtime['runtime_profile'])
         phase = 'index_prepared'
         write(audit / 'prepared.json', {'temporary_index': str(temporary), 'target': str(target),
                                       'index_sha256': nd.digest(temporary), 'resumed': resume})
