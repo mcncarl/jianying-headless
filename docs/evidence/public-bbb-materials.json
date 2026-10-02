@@ -1,0 +1,757 @@
+{
+  "schema": "jianying-public-case/v1",
+  "source_url": "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v.zip",
+  "source_archive_sha256": "7118242b6728d40c871479c5b3c0f0fb27d748089df15d7f1b469f297c74a2d6",
+  "source_sha256": "738e2f999860553d056dd79c952f58f63cbb73892a57c72342ce9e5330d9d2d7",
+  "attribution": "(c) copyright 2008, Blender Foundation / www.bigbuckbunny.org",
+  "license_url": "https://creativecommons.org/licenses/by/3.0/",
+  "license_source": "https://peach.blender.org/about/",
+  "modifications": "影片切片、抽帧、原声拆分、变速、画中画和新增中文文字；非原始影片工程",
+  "media": [
+    {
+      "file": "assets/video-00.mp4",
+      "sha256": "d15ebe21cb24b03bf39a7d5e0209a12db9535782367488e58cc254482c185e4a",
+      "size": 788274,
+      "source_offset_seconds": 35,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-01.mp4",
+      "sha256": "38f67869d5055bc2edea99f8dd321572b1b177f82d79a5619ab7eb1c2f57c327",
+      "size": 880326,
+      "source_offset_seconds": 46,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-02.mp4",
+      "sha256": "73503fbd63a93b148281d1391cd4ee3faad5a4bee5225e2cdc164592be4da374",
+      "size": 393194,
+      "source_offset_seconds": 57,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-03.mp4",
+      "sha256": "c7a322cecc2d8ad7704c80162faafce228ca442beab80c5ee3b5ed85f01a516e",
+      "size": 743569,
+      "source_offset_seconds": 68,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-04.mp4",
+      "sha256": "49b7e3b40bd347a9e7782dcffdf09aee0601eeff3bfbea9b95475a0dda87e731",
+      "size": 559166,
+      "source_offset_seconds": 79,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-05.mp4",
+      "sha256": "cfb8815282ace84a7fdd6f3b0ba09223f6b22d0ef090e7afe9f5cfab00d87e81",
+      "size": 337924,
+      "source_offset_seconds": 90,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-06.mp4",
+      "sha256": "29a20a3320836fde59ea02774778c02075b7c0a6b1aee591323bf6811daa9628",
+      "size": 442681,
+      "source_offset_seconds": 101,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-07.mp4",
+      "sha256": "3cc3f5dac5261299ddc1e24e087444ec7b4316c73c5393306752f6f9be72a6e4",
+      "size": 724079,
+      "source_offset_seconds": 112,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-08.mp4",
+      "sha256": "37349f003497d448c98082bb9344b6f20b8e31847c4981064d076491c2c11227",
+      "size": 487865,
+      "source_offset_seconds": 123,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-09.mp4",
+      "sha256": "26b48900ed667c57b35670dc0579fd7cd4067aa18c405104d3796431d0ee1e9c",
+      "size": 623030,
+      "source_offset_seconds": 134,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-10.mp4",
+      "sha256": "aefa839b77d2b96515d6fff0f3dd325789fb8027d5cb0e3d32f372d94d3bf311",
+      "size": 558727,
+      "source_offset_seconds": 145,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-11.mp4",
+      "sha256": "35ca82098436d8c5bb97e5b653e90ad5f3044ab9271e4f015b143695280ea28c",
+      "size": 486314,
+      "source_offset_seconds": 156,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-12.mp4",
+      "sha256": "915454ae8e60c3d3a497592f4c0e5ed5d2fe086325edd507cce1d4e59e02b165",
+      "size": 481997,
+      "source_offset_seconds": 167,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-13.mp4",
+      "sha256": "aec1c418dd57c011dc8759c46667c0948d875dc7d84104061a326913068d6e6e",
+      "size": 796332,
+      "source_offset_seconds": 178,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-14.mp4",
+      "sha256": "34f589399f2b44a2e6b74587c0fba55a3f3ff8daeee4835a89cbdfb840bcd3e3",
+      "size": 612712,
+      "source_offset_seconds": 189,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-15.mp4",
+      "sha256": "43bcb9ef09d9259746e4523991e2d03329ef3ea200eeb459d36ea407cc9c81cf",
+      "size": 554822,
+      "source_offset_seconds": 200,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-16.mp4",
+      "sha256": "50f67732fe7df91ad0eb6e16c4d21dcc8b684b06a731de9591470fe6d721d453",
+      "size": 767902,
+      "source_offset_seconds": 211,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-17.mp4",
+      "sha256": "47663be4555c4267b8db8b54a9bbc858164d9f917c4a6f69017e6629fbcd5594",
+      "size": 521121,
+      "source_offset_seconds": 222,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-18.mp4",
+      "sha256": "caab2750257d8928c03286caee0be953534c4ff32bb30ecf3c8c547a01a1daef",
+      "size": 467461,
+      "source_offset_seconds": 233,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-19.mp4",
+      "sha256": "27881560c197ea5fe0589dc8a58459df7ea9679aa4c98df57803b12f433e8685",
+      "size": 902503,
+      "source_offset_seconds": 244,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-20.mp4",
+      "sha256": "0463be54d20693c3920e88863087f4da8dbfb4bf243a54e7328cc24c4ba74edf",
+      "size": 668716,
+      "source_offset_seconds": 255,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-21.mp4",
+      "sha256": "14c60f0068d3ed685b0a6d294c4997fcd473efcb7a52ee0bc68cec5896a8b83f",
+      "size": 792264,
+      "source_offset_seconds": 266,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-22.mp4",
+      "sha256": "e7957e4668a2912c49ecd6d5f9bc93f0bf0e133884d3674ff6060544a3c39003",
+      "size": 656161,
+      "source_offset_seconds": 277,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/video-23.mp4",
+      "sha256": "f6103b0d8d32dd513b8e0add47cd67b816d37b46fcc43ba851c1186eb0fa833b",
+      "size": 555681,
+      "source_offset_seconds": 288,
+      "media_type": "video",
+      "ffmpeg_options": [
+        "-t",
+        "10",
+        "-an",
+        "-vf",
+        "fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "22",
+        "-pix_fmt",
+        "yuv420p"
+      ]
+    },
+    {
+      "file": "assets/frame-00.png",
+      "sha256": "ca670337597c179cf98a5aa32035a32c807422e6d87e32625954d4e4c5d13aa6",
+      "size": 260878,
+      "source_offset_seconds": 75,
+      "media_type": "photo",
+      "ffmpeg_options": [
+        "-frames:v",
+        "1"
+      ]
+    },
+    {
+      "file": "assets/frame-01.png",
+      "sha256": "cb0e5a681003fa2f8b350a054bf61573b5f47f5637f0053611d6bc410cd11a1f",
+      "size": 240519,
+      "source_offset_seconds": 98,
+      "media_type": "photo",
+      "ffmpeg_options": [
+        "-frames:v",
+        "1"
+      ]
+    },
+    {
+      "file": "assets/frame-02.png",
+      "sha256": "0094ba2fbc5c9a29f6e574bcec8d2693424a28d5e347084b011bb2632d4aca01",
+      "size": 312313,
+      "source_offset_seconds": 121,
+      "media_type": "photo",
+      "ffmpeg_options": [
+        "-frames:v",
+        "1"
+      ]
+    },
+    {
+      "file": "assets/frame-03.png",
+      "sha256": "7cb59fbaf29c77146b83ebaca851cb2061ef629bea0db9cfe6afded34735290d",
+      "size": 324752,
+      "source_offset_seconds": 144,
+      "media_type": "photo",
+      "ffmpeg_options": [
+        "-frames:v",
+        "1"
+      ]
+    },
+    {
+      "file": "assets/frame-04.png",
+      "sha256": "005fe4fdc0c5e5f51fb168d9df93feb3033161fd0610231e4384cf05110cb1a2",
+      "size": 173957,
+      "source_offset_seconds": 167,
+      "media_type": "photo",
+      "ffmpeg_options": [
+        "-frames:v",
+        "1"
+      ]
+    },
+    {
+      "file": "assets/frame-05.png",
+      "sha256": "c3c31025f0420209abc4f2753872e37263997e1e531c6152b0f5fea4f095dec2",
+      "size": 261693,
+      "source_offset_seconds": 190,
+      "media_type": "photo",
+      "ffmpeg_options": [
+        "-frames:v",
+        "1"
+      ]
+    },
+    {
+      "file": "assets/frame-06.png",
+      "sha256": "e59d3fa7a9f4b1c8252534fdd43efa7d94fea835bb85b78565693e6827428149",
+      "size": 272244,
+      "source_offset_seconds": 213,
+      "media_type": "photo",
+      "ffmpeg_options": [
+        "-frames:v",
+        "1"
+      ]
+    },
+    {
+      "file": "assets/frame-07.png",
+      "sha256": "673f911d9b07de14c14df016ae75379a7d170377afe5b9d531a284b3693b36af",
+      "size": 270963,
+      "source_offset_seconds": 236,
+      "media_type": "photo",
+      "ffmpeg_options": [
+        "-frames:v",
+        "1"
+      ]
+    },
+    {
+      "file": "assets/audio-00.wav",
+      "sha256": "8d5a1ebdc31f78e96567b1ff4ec1a02b29bce3e6cbdc9d8d2d4703f60b2bf759",
+      "size": 1411404,
+      "source_offset_seconds": 35,
+      "media_type": "audio",
+      "ffmpeg_options": [
+        "-t",
+        "8",
+        "-vn",
+        "-c:a",
+        "pcm_s16le",
+        "-ar",
+        "44100",
+        "-ac",
+        "2"
+      ]
+    },
+    {
+      "file": "assets/audio-01.wav",
+      "sha256": "fb9f6cc5799819942532c86a43499ae4223685cb0fd0ced166e72d65e75324b2",
+      "size": 1411404,
+      "source_offset_seconds": 45,
+      "media_type": "audio",
+      "ffmpeg_options": [
+        "-t",
+        "8",
+        "-vn",
+        "-c:a",
+        "pcm_s16le",
+        "-ar",
+        "44100",
+        "-ac",
+        "2"
+      ]
+    },
+    {
+      "file": "assets/audio-02.wav",
+      "sha256": "19d131f59a08a947c1e9a9782ddb82e7a25c0404d7350c8fac8300dc710662da",
+      "size": 1411404,
+      "source_offset_seconds": 55,
+      "media_type": "audio",
+      "ffmpeg_options": [
+        "-t",
+        "8",
+        "-vn",
+        "-c:a",
+        "pcm_s16le",
+        "-ar",
+        "44100",
+        "-ac",
+        "2"
+      ]
+    },
+    {
+      "file": "assets/audio-03.wav",
+      "sha256": "63507c5602356c96bfab6bcaa64ad80001e2c63f7c2cc81219a889ca02c3bf01",
+      "size": 1411404,
+      "source_offset_seconds": 65,
+      "media_type": "audio",
+      "ffmpeg_options": [
+        "-t",
+        "8",
+        "-vn",
+        "-c:a",
+        "pcm_s16le",
+        "-ar",
+        "44100",
+        "-ac",
+        "2"
+      ]
+    },
+    {
+      "file": "assets/audio-04.wav",
+      "sha256": "908c3e08c106a402f8dc4c7e6fd220baf86b164a3170bdb63c5dbaf913738192",
+      "size": 1411404,
+      "source_offset_seconds": 75,
+      "media_type": "audio",
+      "ffmpeg_options": [
+        "-t",
+        "8",
+        "-vn",
+        "-c:a",
+        "pcm_s16le",
+        "-ar",
+        "44100",
+        "-ac",
+        "2"
+      ]
+    },
+    {
+      "file": "assets/audio-05.wav",
+      "sha256": "f41895bb3e453137494a559768e080fc3da9205c1fdb4770b5e66f57a3ea6fd9",
+      "size": 1411404,
+      "source_offset_seconds": 85,
+      "media_type": "audio",
+      "ffmpeg_options": [
+        "-t",
+        "8",
+        "-vn",
+        "-c:a",
+        "pcm_s16le",
+        "-ar",
+        "44100",
+        "-ac",
+        "2"
+      ]
+    },
+    {
+      "file": "assets/audio-06.wav",
+      "sha256": "9cf86ca4a55c26b05dd5cecf56003ee1fa06a7027a815884b444dfe1e5cf224e",
+      "size": 1411404,
+      "source_offset_seconds": 95,
+      "media_type": "audio",
+      "ffmpeg_options": [
+        "-t",
+        "8",
+        "-vn",
+        "-c:a",
+        "pcm_s16le",
+        "-ar",
+        "44100",
+        "-ac",
+        "2"
+      ]
+    }
+  ],
+  "duration_us": 50233333,
+  "tracks": 23,
+  "segments": 154
+}
