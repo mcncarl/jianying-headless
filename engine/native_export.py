@@ -466,20 +466,88 @@ def settings_for(timeline, bitrate, timeout):
     return dict(width=width, height=height, fps=fps, bitrate=bitrate, timeout_seconds=timeout)
 
 
+def sbpl_literal(path):
+    r"""Quote a path for an SBPL subpath rule; SBPL has no JSON \uXXXX form.
+
+    Non-ASCII bytes stay verbatim. SBPL reads at most two hex digits after \x,
+    so a control byte followed by a hex character cannot be over-consumed; octal
+    escapes are avoided because those do consume the following digits.
+    """
+    escapes = {0x5c: b'\\\\', 0x22: b'\\"', 0x0a: b'\\n', 0x0d: b'\\r', 0x09: b'\\t'}
+    literal = bytearray(b'"')
+    for byte in str(path).encode('utf-8', 'surrogateescape'):
+        if byte in escapes:
+            literal.extend(escapes[byte])
+        elif byte < 0x20 or byte == 0x7f:
+            literal.extend(b'\\x%02x' % byte)
+        else:
+            literal.append(byte)
+    literal.append(0x22)
+    return bytes(literal)
+
+
 def sandbox_profile(out):
-    literal = json.dumps(str(out))
-    return ('(version 1)\n(allow default)\n(deny network*)\n(deny file-write*)\n'
-            '(deny file-read-data (subpath "/Users"))\n'
-            '(deny file-read-data (subpath "/Library/Keychains"))\n'
-            f'(allow file-read-data (subpath {literal}))\n'
-            f'(allow file-write* (subpath {literal}))\n'
-            '(allow file-write* (literal "/dev/null"))\n').encode()
+    literal = sbpl_literal(out)
+    return (b'(version 1)\n(allow default)\n(deny network*)\n(deny file-write*)\n'
+            b'(deny file-read-data (subpath "/Users"))\n'
+            b'(deny file-read-data (subpath "/Library/Keychains"))\n'
+            b'(allow file-read-data (subpath ' + literal + b'))\n'
+            b'(allow file-write* (subpath ' + literal + b'))\n'
+            b'(allow file-write* (literal "/dev/null"))\n')
 
 
-def validate_probe(info, settings, duration_us, audio_expected):
+def read_ftyp(path):
+    """Return the real ftyp box, walking the box chain and seeking over media data.
+
+    ffprobe reports `format.tags.major_brand` merged with a copy of the same
+    values that the native writer stores in moov/meta/ilst, so that tag cannot
+    identify the container; this box can. The walk is bounded: every step
+    advances by at least one box header and no box may leave the file.
+    """
+    with Path(path).open('rb') as stream:
+        stream.seek(0, os.SEEK_END)
+        file_size = stream.tell()
+        offset = 0
+        container = None
+        while offset < file_size:
+            j.require(file_size - offset >= 8, 'Native MP4 box header is truncated.')
+            stream.seek(offset)
+            header = stream.read(8)
+            box_size = int.from_bytes(header[:4], 'big')
+            header_size = 8
+            if box_size == 1:
+                j.require(file_size - offset >= 16, 'Native MP4 box largesize is truncated.')
+                box_size = int.from_bytes(stream.read(8), 'big')
+                header_size = 16
+            # size 0 means "this box runs to the end of the file"; the walk stays
+            # bounded by rejecting it instead of trusting a length it cannot verify.
+            j.require(box_size != 0, 'Native MP4 box at offset %d declares size 0.' % offset)
+            j.require(box_size >= header_size, 'Native MP4 box size is invalid.')
+            j.require(box_size <= file_size - offset, 'Native MP4 box exceeds the file boundary.')
+            if header[4:] == b'ftyp':
+                payload_size = box_size - header_size
+                j.require(payload_size >= 8 and (payload_size - 8) % 4 == 0,
+                          'Native MP4 ftyp payload is invalid.')
+                major_brand = stream.read(4).decode('latin-1')
+                minor_version = int.from_bytes(stream.read(4), 'big')
+                compatible_brands = [stream.read(4).decode('latin-1') for _ in range((payload_size - 8) // 4)]
+                current = {'major_brand': major_brand, 'minor_version': minor_version,
+                           'compatible_brands': compatible_brands}
+                j.require(container is None or container == current, 'Native MP4 ftyp boxes conflict.')
+                container = current
+            offset += box_size
+    j.require(container is not None, 'Native MP4 ftyp box is missing.')
+    return container
+
+
+def validate_probe(info, settings, duration_us, audio_expected, container):
     fmt = info.get('format', {})
-    j.require(fmt.get('tags', {}).get('major_brand') in ('isom', 'mp41', 'mp42'),
+    brand = container['major_brand']
+    j.require(brand in ('isom', 'mp41', 'mp42'),
               'Native output is not a standard MP4 container')
+    reported_brand = fmt.get('tags', {}).get('major_brand')
+    j.require(reported_brand is None or all(part.strip() == brand for part in reported_brand.split(';')),
+              f'Native MP4 brand differs between ftyp ({brand!r}) and ffprobe ({reported_brand!r}).')
     video = [s for s in info.get('streams', []) if s.get('codec_type') == 'video']
     audio = [s for s in info.get('streams', []) if s.get('codec_type') == 'audio']
     j.require(len(video) == 1 and video[0].get('codec_name') == 'h264', 'Expected one H.264 stream')
@@ -511,7 +579,9 @@ def validate_probe(info, settings, duration_us, audio_expected):
             'duration_delta_seconds': round(actual_duration - duration_us / 1_000_000, 6),
             'width': v['width'], 'height': v['height'], 'fps': actual_fps,
             'video_codec': 'h264', 'audio_codec': 'aac' if audio else None,
-            'major_brand': fmt['tags']['major_brand']}
+            'ftyp_major_brand': brand, 'ffprobe_major_brand': reported_brand,
+            'ftyp_minor_version': container['minor_version'],
+            'ftyp_compatible_brands': container['compatible_brands']}
 
 
 def run(build, out, bitrate=4_000_000, timeout=600):
@@ -584,7 +654,9 @@ def run(build, out, bitrate=4_000_000, timeout=600):
         audio_expected = any(bool(child['materials'].get('audios')) or any(
             v.get('has_audio', True) for v in child['materials'].get('videos', [])
             if v.get('type') == 'video' and v.get('path')) for _, child in compound.graph(timeline))
-        evidence['media'] = validate_probe(probe, settings, timeline['duration'], audio_expected)
+        container = read_ftyp(output)
+        j.write(job / 'ftyp.json', container)
+        evidence['media'] = validate_probe(probe, settings, timeline['duration'], audio_expected, container)
         decoded = subprocess.run(['ffmpeg', '-v', 'error', '-xerror', '-i', str(output), '-f', 'null', '-'],
                                  capture_output=True, timeout=timeout)
         j.write(job / 'decode.stderr.log', decoded.stderr)

@@ -1,5 +1,111 @@
 # 验证状态
 
+## 2026-09-23：导出路径编码与容器判据修复（候选补丁）
+
+本节记录候选补丁的验证结果：分支 `fix/export-path-and-container`，基于本轮开始时的上游 `main`
+（`fa1eaadb`），路径修复与容器判据分成两个可独立审核的提交，以候选 PR 形式提交、不自行合并。
+分支随后合入上游 `main`（`8b8984e`，含 Windows 导出后端），**两个修复提交本身未改动**，
+合并后重跑了下表全部检查。
+数据来自同一台 Mac、同一官方 11.5.0 安装、同一已验证 build 快照；
+不声称其他机器、其他剪映版本或全部路径形态。命令中的 `<repo>` 指仓库根目录。
+
+| 检查 | 结果与范围 |
+| --- | --- |
+| SBPL 路径字面量 | `sandbox_profile()` 改用 `sbpl_literal()`：非 ASCII 按 UTF-8 原样写入，`\"` `\\` `\n` `\r` `\t` 与其余控制字符的 `\xHH` 按 SBPL 语法转义；不再使用 `json.dumps`；禁用范围与 `/dev/null` 例外未变 |
+| 容器身份判据 | `validate_probe()` 改判真实 `ftyp` 的 `major_brand`，`ffprobe` 的汇总 TAG 只用于比对与报告，不再作为判据；其余全部检查（单条 H.264、画布、fps、帧数策略、时长、音频）未放宽 |
+| 7 形态路径矩阵（2 秒 / 30 fps / 832×480） | 修复前 7/7 被拒：中文与组合形态在原生阶段失败（`native_returncode: 1`，规则与真实目录名失配），ASCII / 空格 / 引号 / 反斜杠 / 换行各产出 60 帧但被容器 TAG 判失败。修复后 7/7 `encoded-and-decoded`、60/60 帧（组合形态的画面另有黑帧问题，见下） |
+| 公开素材真实案例（`docs/media/*.mp4`，50.233333 秒 / 30 fps / 540×960） | 修复前 4/4 失败：ASCII 路径各 1507 帧但被容器 TAG 判失败，中文路径原生失败。修复后 4/4 `encoded-and-decoded`、1507/1507 帧（`exact-aligned`）、容器时长 50.233332 秒、H.264 + 1 条 AAC、完整解码通过、来源 build 与暂存输入未变 |
+| 自动化检查 | `python3 -m unittest discover -s tests -v` 144 项通过；导出防护 34 项通过（`JY_NATIVE_EXPORT_TEST_WORK` 指向 `$HOME` 下的目录时） |
+| 源码包检查 | `python3 tools/check_package.py` 通过（含新增工具与重新同步的 `native_export.py` pin） |
+
+### 容器判据：为什么不能用 ffprobe 的汇总 TAG
+
+剪映 11.5.0 原生产物里 `ftyp` **只有 1 个**（偏移 0、32 字节、`major_brand=isom`、`minor_version=512`、
+`compatible_brands=[isom, iso2, avc1, mp41]`），而 `ffprobe` 报 `format.tags.major_brand = "isom;isom"`，
+同源的 `minor_version = "512;512"`、`compatible_brands = "isomiso2avc1mp41;isomiso2avc1mp41"`。
+第二份来自 `moov` 内的 `meta`（`mdta` `keys`/`ilst`）：在 `moov` 里能直接定位到 `major_brand`、
+`minor_version`、`compatible_brands` 三个同名键，`ffprobe` 把两处同名合并成一个分号列表。
+所以「同名重复」是合法产物，必须接受；判据改为真实 `ftyp`，汇总 TAG 存在时按 `;` 拆分，
+每个分量都必须等于真实 brand，出现解释不了的分量则拒绝，错误信息同时给出两个值。
+
+`read_ftyp()` 的读法有界：32 位 size，`size == 1` 读 64 位 largesize；`size == 0`、`size < 8`、
+header 截断、box 越界都明确报错；`mdat` 等大 box 用 `seek` 跳过，不把整个文件读入内存，
+每步至少前进 8 字节。缺失 `ftyp` 拒绝，多份 `ftyp` 内容一致才接受。`run()` 另外把真实
+`ftyp` 写入任务目录的 `ftyp.json` 作为证据。
+
+上游已登记的同类问题（图片/GIF 的 149/150、发布预览与原始产物的容器 TAG 差异）不因本次改动而关闭。
+
+### 路径编码：SBPL 只认自己的转义
+
+含中文的目录过去被写成 `(allow file-write* (subpath "...\u4e2d\u6587\u8def\u5f84"))`，
+SBPL 不解析 `\uXXXX`，规则与磁盘真实目录名失配，原生导出在 `runtime snapshot write failed`
+处失败（`native_returncode: 1`）。本机用 `/usr/bin/sandbox-exec` 逐形态实测（profile 只放行该目录，
+并带失配对照，确认该探测能检出「字面量没解析成真实目录」）：
+
+| 写法 | 实测结果 |
+| --- | --- |
+| 非 ASCII 原样 UTF-8 | 放行（正确） |
+| `\uXXXX`（JSON 形式） | 拒绝（规则失配，复现原始故障） |
+| `\"` `\\` `\n` `\r` `\t` | 放行（正确） |
+| `\xHH`（两位十六进制） | 放行；后面紧跟十六进制字符也正确（`\x01abcdef` 只吃两位） |
+| `\NNN`（八进制） | 不可用：会多吃后续数字（`\0010000` 解析错误），因此不使用 |
+
+`sandbox_profile()` 生成的 profile 里，两条 subpath 字面量与真实目录名逐字符一致（测试里用独立
+解码函数比对，不经过被测函数）。
+
+### 复现命令与验收口径
+
+```bash
+python3 tools/verify_export_paths.py --build /absolute/path/to/verified/build --tag local
+```
+
+对 7 种输出目录形态各跑一次真实原生导出（目录名见脚本 `CASES`），打印表格并写出
+`work/verify-export-paths-<tag>/results.json`。某形态「通过」= 工具退出码 0、`status` 为
+`encoded-and-decoded`、完整解码通过、`media.frames` 等于期望帧数（优先取 `result.json` 的
+`expected_frames`，否则按 `build.json` 的 `duration_us` × `plan.json` 的 `canvas.fps` 推算），
+并且 `render.mp4` 与真实 `ftyp` 可读。导出前剪映必须完全退出，脚本检测到剪映进程会拒绝运行。
+本机实测：7 形态中 6 个通过全部判据（60/60 帧）；反斜杠形态因既有的 59/60 缺尾帧被严格门禁拒绝；
+组合形态通过了全部**元数据**判据，画面却是纯黑（见下「边界与未完成」）。
+因此该工具的判据只覆盖元数据，不等于画面验收——画面仍须实际查看。
+
+### 边界与未完成
+
+- **含双引号与换行的目录名会渲染出纯黑画面（最小触发条件已定位）**：目录名同时含 `"` 与换行时，导出会
+  「成功」（60/60 帧、容器与完整解码都通过），但画面是纯黑。实测 `jm"q\nx` 为 58,741 字节、
+  视频码率 28,004 bps、`RendererMetalV2::createPipeline() failed` 546 次；同一 build 下
+  `jm-ascii` 与 `jm"q" space`（引号+空格）、`jm"q\b"`（引号+反斜杠）均为 991,858 字节、
+  码率约 3.76 Mbps、0 次管线失败，画面正常；单独含换行或引号也正常。
+  失败信息形如 `error reading '…行 -fmodules-cache-path=…'`，说明引擎内部调用着色器编译器时，
+  模块缓存路径参数被该目录名截断，渲染管线全部创建失败，于是每一帧都是空的。
+  本次修复的 `export.sb` 字面量与真实目录名在该形态下已核对为逐字符一致，所以这是原生引擎内部
+  路径处理的限制，**不是本次 profile 编码引入的**；也不属于上文 9/21 记录的「双层复合黑屏」
+  （那条的丢失点在 `GetDraftFromJson`）。**该形态不应记为通过**；`tools/verify_export_paths.py`
+  的判据只覆盖元数据，因此这类问题必须靠实际观看画面发现。
+- 59/60 缺尾帧按上文 9/22 已定位机制（`TEVTEncodeUnit` 的 EOS 可越过未提交帧任务）继续跟踪。把本次
+  `work/` 下的产物逐个数帧后，缺 1 帧共 5 次，其中 **2 次发生在修复前的运行**：
+  `pathmatrix-main-fa1eaad/jm-ascii` 59/60、`pubcase-import/export-before-ascii` 1506/1507；
+  3 次发生在修复后：`verify-export-paths-after-fix/jm\backslash` 59/60、提交 1 的隔离导出 59/60、
+  组合「引号+反斜杠」隔离 59/60。`work/` 下 2026-09-20 的更早产物同样有 59 帧，问题早于本次修复。
+  按产出算比例：修复前 14 次里 2 次、修复后 22 次里 3 次，两者没有可辨差异；且 1507 帧的长序列
+  也出现过 1506，短序列与长序列都会丢，说明它是既有的时序竞态，与本次两处改动无关。
+  缺帧一律被严格帧数门禁拒绝（不会静默交付），本次修复不声称解决该问题，也未改动等待、导出参数或门禁。
+- `read_ftyp()` 的取舍：`size == 0`（延伸到文件末尾）的 box 明确报错。剪映 11.5.0 实测产物没有这种
+  box；若将来遇到合法文件带这种 box，应单独讨论，而不是放宽整条链路。
+- 未做画面/主观视听验收：除上面明确的组合形态黑帧问题外，其余形态只做了容器、帧数、时长、流、
+  完整解码与来源未变检查，没有抽帧确认内容。
+- 本仓库放在非 `/Users` 卷上时，既有防护用例
+  `test_sandbox_allows_only_owned_user_data_and_no_external_writes` 会失败（其 profile 只 deny `/Users`，
+  兄弟目录读取被 `(allow default)` 放行）。修复前的 `fa1eaad` 同样如此（30 项 1 失败），
+  **不是本次改动引入**；把 `JY_NATIVE_EXPORT_TEST_WORK` 指向 `$HOME` 下目录时 144 项与 34 项全部通过。
+- 分支已在两个修复提交之后合入上游 `main`（`8b8984e`）：合并无冲突，`engine/native_export.py` 的
+  哈希与 pin 仍为 `7b3470c04f91…`，单测 144 项与导出防护 34 项全部通过；`check_package.py` 的源码清单
+  条目由 92 增至 101（增加的是上游 Windows 相关文件），状态仍为 `source-checks-passed`。
+- 证据保留在忽略目录 `work/pathmatrix-before-fa1eaad/`、`work/pathmatrix-after-fix/`、
+  `work/pubcase-{before,after}-*/`、`work/verify-export-paths-after-fix/`；不随仓库分发。
+  候选分支 `fix/export-path-and-container` 以候选 PR 形式提交，不修改也不强推 #13 的分支，
+  不自行合并；本节数据均为本机实测。#13 已由原作者于 2026-09-24 关闭且未合并，
+  本分支未包含它的任何提交（本地也从未检出其分支）。
+
 ## 2026-09-22：11.5 兼容补交候选与后续诊断
 
 本节记录在 `6f9c563` 上继续验收的本地候选，区别于下文维护环境的历史场次。

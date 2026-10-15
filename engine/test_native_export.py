@@ -36,6 +36,8 @@ class ExportGuards(unittest.TestCase):
         helper.start()
         self.addCleanup(helper.stop)
         self.settings = dict(width=1280, height=720, fps=25, bitrate=4_000_000, timeout_seconds=60)
+        self.container = {'major_brand': 'isom', 'minor_version': 512,
+                          'compatible_brands': ['isom', 'iso2', 'avc1', 'mp41']}
         self.probe = {'format': {'duration': '6.0', 'tags': {'major_brand': 'isom'}},
                       'streams': [{'codec_type': 'video', 'codec_name': 'h264', 'width': 1280, 'height': 720,
                                    'r_frame_rate': '25/1', 'nb_frames': '150'},
@@ -126,29 +128,77 @@ class ExportGuards(unittest.TestCase):
                                   'runtime_profile': 'jy14-headless-macos-11.5.0'}, self.folder, self.root)
 
     def test_quicktime_mislabeled_mp4_rejected(self):
-        self.probe['format']['tags']['major_brand'] = 'qt  '
+        self.container['major_brand'] = 'qt  '
         with self.assertRaisesRegex(ValueError, 'MP4 container'):
-            e.validate_probe(self.probe, self.settings, 6_000_000, True)
+            e.validate_probe(self.probe, self.settings, 6_000_000, True, self.container)
+
+    def test_ffprobe_duplicate_brand_accepted(self):
+        self.probe['format']['tags']['major_brand'] = 'isom;isom'
+        value = e.validate_probe(self.probe, self.settings, 6_000_000, True, self.container)
+        self.assertEqual(value['ftyp_major_brand'], 'isom')
+        self.assertEqual(value['ffprobe_major_brand'], 'isom;isom')
+
+    def test_ffprobe_conflicting_brands_rejected(self):
+        for reported in ('isom;mp42', 'qt  '):
+            with self.subTest(reported=reported):
+                self.probe['format']['tags']['major_brand'] = reported
+                with self.assertRaisesRegex(ValueError, 'ftyp.*ffprobe') as error:
+                    e.validate_probe(self.probe, self.settings, 6_000_000, True, self.container)
+                self.assertIn('isom', str(error.exception))
+                self.assertIn(reported, str(error.exception))
+
+    def test_ffprobe_missing_brand_accepted(self):
+        del self.probe['format']['tags']['major_brand']
+        value = e.validate_probe(self.probe, self.settings, 6_000_000, True, self.container)
+        self.assertIsNone(value['ffprobe_major_brand'])
+
+    def test_read_ftyp(self):
+        payload = b'isom' + (512).to_bytes(4, 'big') + b'isomiso2avc1mp41'
+        normal = (8 + len(payload)).to_bytes(4, 'big') + b'ftyp' + payload
+        extended = b'\x00\x00\x00\x01ftyp' + (16 + len(payload)).to_bytes(8, 'big') + payload
+        free = b'\x00\x00\x00\x08free'
+        cases = (
+            ('single', normal + free, self.container),
+            ('missing', free, 'missing'),
+            ('identical', normal + free + normal, self.container),
+            ('conflicting', normal + normal.replace(b'isom', b'mp42', 1), 'conflict'),
+            ('short_size', b'\x00\x00\x00\x07free', 'size'),
+            ('zero_size', b'\x00\x00\x00\x00free', 'size'),
+            ('past_end', b'\x00\x00\x00\x20free', 'boundary'),
+            ('short_header', free + b'\x00\x00', 'truncated'),
+            ('short_largesize', b'\x00\x00\x00\x01ftyp' + b'\x00\x00', 'truncated'),
+            ('invalid_largesize', b'\x00\x00\x00\x01ftyp' + (15).to_bytes(8, 'big'), 'size'),
+            ('extended', extended, self.container),
+        )
+        for name, content, expected in cases:
+            with self.subTest(name=name):
+                path = self.root / (name + '.mp4')
+                path.write_bytes(content)
+                if isinstance(expected, dict):
+                    self.assertEqual(e.read_ftyp(path), expected)
+                else:
+                    with self.assertRaisesRegex(ValueError, expected):
+                        e.read_ftyp(path)
 
     def test_truncated_video_rejected(self):
         self.probe['streams'][0]['nb_frames'] = '75'
         with self.assertRaisesRegex(ValueError, 'frame count'):
-            e.validate_probe(self.probe, self.settings, 6_000_000, True)
+            e.validate_probe(self.probe, self.settings, 6_000_000, True, self.container)
 
     def test_missing_audio_rejected(self):
         self.probe['streams'].pop()
         with self.assertRaisesRegex(ValueError, 'audio stream'):
-            e.validate_probe(self.probe, self.settings, 6_000_000, True)
+            e.validate_probe(self.probe, self.settings, 6_000_000, True, self.container)
 
     def test_wrong_canvas_and_fps_rejected(self):
         for field, value in (('width', 1920), ('r_frame_rate', '30/1')):
             bad = deepcopy(self.probe)
             bad['streams'][0][field] = value
             with self.assertRaises(ValueError):
-                e.validate_probe(bad, self.settings, 6_000_000, True)
+                e.validate_probe(bad, self.settings, 6_000_000, True, self.container)
 
     def test_matching_mp4_accepted(self):
-        value = e.validate_probe(self.probe, self.settings, 6_000_000, True)
+        value = e.validate_probe(self.probe, self.settings, 6_000_000, True, self.container)
         self.assertEqual(value['frames'], 150)
         self.assertEqual(value['audio_codec'], 'aac')
         self.assertEqual(value['frame_delta'], 0)
@@ -158,29 +208,29 @@ class ExportGuards(unittest.TestCase):
             with self.subTest(count=count):
                 self.probe['streams'][0]['nb_frames'] = count
                 with self.assertRaisesRegex(ValueError, 'frame count'):
-                    e.validate_probe(self.probe, self.settings, 6_000_000, True)
+                    e.validate_probe(self.probe, self.settings, 6_000_000, True, self.container)
 
     def test_microsecond_precision_does_not_admit_a_missing_frame(self):
         self.settings['fps'] = 30
         self.probe['streams'][0]['r_frame_rate'] = '30/1'
         self.probe['format']['duration'] = '1.233333'
         self.probe['streams'][0]['nb_frames'] = '37'
-        value = e.validate_probe(self.probe, self.settings, 1_233_333, True)
+        value = e.validate_probe(self.probe, self.settings, 1_233_333, True, self.container)
         self.assertEqual(value['frame_count_policy'], 'exact-aligned')
         self.probe['streams'][0]['nb_frames'] = '36'
         with self.assertRaisesRegex(ValueError, 'frame count'):
-            e.validate_probe(self.probe, self.settings, 1_233_333, True)
+            e.validate_probe(self.probe, self.settings, 1_233_333, True, self.container)
 
     def test_fractional_timeline_allows_only_adjacent_frame_counts(self):
         for count in (150, 151):
             self.probe['streams'][0]['nb_frames'] = str(count)
-            value = e.validate_probe(self.probe, self.settings, 6_020_000, True)
+            value = e.validate_probe(self.probe, self.settings, 6_020_000, True, self.container)
             self.assertEqual(value['accepted_frame_range'], [150, 151])
             self.assertEqual(value['frame_count_policy'], 'adjacent-fractional')
         for count in (149, 152):
             self.probe['streams'][0]['nb_frames'] = str(count)
             with self.assertRaisesRegex(ValueError, 'frame count'):
-                e.validate_probe(self.probe, self.settings, 6_020_000, True)
+                e.validate_probe(self.probe, self.settings, 6_020_000, True, self.container)
 
     def test_unknown_mask_identity_is_rejected(self):
         for node in ({'id': 'circle'}, {'resource_type': 'text'},
