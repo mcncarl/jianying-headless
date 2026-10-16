@@ -1,7 +1,9 @@
 """Retained isolated fixtures; never modify real projects or the installed app."""
 from copy import deepcopy
+import errno
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -196,6 +198,7 @@ class PublishRecoveryTests(unittest.TestCase):
                         patch.object(j.nd, 'helper', return_value=helper),
                         patch.object(j, 'read_xattrs', return_value={}),
                         patch.object(j, 'copy_xattrs', return_value=({}, [])),
+                        patch.object(j, 'clonefile', side_effect=lambda s, d: shutil.copyfile(s, d)),
                         patch.object(j, 'exclusive_rename', side_effect=lambda a,b: a.rename(b))):
             context.start()
             self.addCleanup(context.stop)
@@ -269,6 +272,41 @@ class PublishRecoveryTests(unittest.TestCase):
         self.assertFalse(report['index_replaced'])
         self.assertEqual(report['recovery'], 'inspect-index-and-run-verify')
 
+    def test_temporary_index_is_cloned_from_the_original(self):
+        with patch.object(j, 'clonefile', side_effect=lambda s, d: shutil.copyfile(s, d)) as clone:
+            self.assertEqual(self.publish('cloned')['status'], 'created')
+        source, destination = clone.call_args.args
+        self.assertEqual(source, self.root / 'root_meta_info.json')
+        self.assertEqual(destination.parent, self.root)
+        self.assertTrue(destination.name.startswith('.root_meta_info.headless-'))
+        prepared = j.read_json(self.folder / 'cloned' / 'prepared.json')
+        self.assertEqual(prepared['prepared_via'], 'clonefile')
+
+    def test_clonefile_unsupported_falls_back_to_plain_create(self):
+        with patch.object(j, 'clonefile', side_effect=OSError(errno.ENOTSUP, 'not supported')):
+            self.assertEqual(self.publish('fallback')['status'], 'created')
+        prepared = j.read_json(self.folder / 'fallback' / 'prepared.json')
+        self.assertEqual(prepared['prepared_via'], 'create')
+
+    def test_clonefile_errors_other_than_unsupported_never_fall_back(self):
+        for error_no in (errno.EEXIST, errno.EPERM, errno.ELOOP):
+            with self.subTest(error_no=error_no), \
+                    patch.object(j, 'clonefile', side_effect=OSError(error_no, 'injected clone error')):
+                with self.assertRaisesRegex(ValueError, 'injected clone error'):
+                    self.publish('clone-error-' + str(error_no))
+            self.assertFalse(self.target.exists())
+            self.assertEqual(j.read_json(self.root / 'root_meta_info.json'), self.original)
+
+    def test_rewrite_failure_aborts_before_index_replacement(self):
+        with patch.object(j, 'rewrite', side_effect=OSError(errno.ENOSPC, 'injected rewrite failure')):
+            with self.assertRaisesRegex(ValueError, 'injected rewrite failure'):
+                self.publish('rewrite-failed')
+        self.assertFalse(self.target.exists())
+        self.assertEqual(j.read_json(self.root / 'root_meta_info.json'), self.original)
+        report = self.failure('rewrite-failed')
+        self.assertEqual(report['phase'], 'locked')
+        self.assertEqual(report['recovery'], 'publish-after-fixing-cause')
+
 
 class AttributePolicyTests(unittest.TestCase):
     def test_macl_and_quarantine_changes_remain_blocked(self):
@@ -276,6 +314,20 @@ class AttributePolicyTests(unittest.TestCase):
             with self.subTest(name=name), patch.object(j, 'write'), patch.object(j.subprocess, 'run'), patch.object(j, 'read_xattrs', return_value={name: b'changed'}):
                 with self.assertRaisesRegex(ValueError, name):
                     j.copy_xattrs({name: b'original'}, Path('/unused'), Path('/audit'))
+
+    def test_only_provenance_value_change_is_tolerated(self):
+        source = {'com.apple.provenance': b'old', 'com.apple.quarantine': b'kept'}
+        copied = {'com.apple.provenance': b'new', 'com.apple.quarantine': b'kept'}
+        with patch.object(j, 'write'), patch.object(j.subprocess, 'run'), patch.object(j, 'read_xattrs', return_value=copied):
+            staged, changed = j.copy_xattrs(source, Path('/unused'), Path('/audit'))
+        self.assertEqual(staged, copied)
+        self.assertEqual(changed, ['com.apple.provenance'])
+
+    def test_provenance_appearance_or_disappearance_remains_blocked(self):
+        for source, copied in (({'com.apple.provenance': b'x'}, {}), ({}, {'com.apple.provenance': b'x'})):
+            with self.subTest(source_has_provenance=bool(source)), patch.object(j, 'write'), patch.object(j.subprocess, 'run'), patch.object(j, 'read_xattrs', return_value=copied):
+                with self.assertRaisesRegex(ValueError, 'provenance'):
+                    j.copy_xattrs(source, Path('/unused'), Path('/audit'))
 
 
 if __name__ == '__main__':
